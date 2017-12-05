@@ -6,19 +6,19 @@ import fi.iki.elonen.NanoWSD.WebSocketFrame.CloseCode;
 import java.io.IOException;
 import java.util.function.Consumer;
 
-class NanoSocketServer implements SocketServer {
+class NanoHttpdServer implements Server {
 
-  private final Wsd wsd;
+  private final Server server;
   private Consumer<String> callback;
 
-  public NanoSocketServer(int port) {
-    wsd = new Wsd(port);
+  NanoHttpdServer(int port) {
+    server = new Server(port);
   }
 
   @Override
   public void start() {
     try {
-      wsd.start();
+      server.start(Integer.MAX_VALUE);
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
@@ -26,14 +26,14 @@ class NanoSocketServer implements SocketServer {
 
   @Override
   public void stop() {
-    wsd.stop();
+    server.stop();
   }
 
   @Override
   public void send(String msg) {
-    if (wsd.socket != null) {
+    if (server.socket != null) {
       try {
-        wsd.socket.send(msg);
+        server.socket.send(msg);
       } catch (IOException e) {
         throw new RuntimeException(e);
       }
@@ -45,11 +45,16 @@ class NanoSocketServer implements SocketServer {
     this.callback = callback;
   }
 
-  private class Wsd extends NanoWSD {
+  @Override
+  public void resourceRoot(String path) {
+    //todo
+  }
+
+  private class Server extends NanoWSD {
 
     Socket socket;
 
-    Wsd(int port) {
+    Server(int port) {
       super("localhost", port);
     }
 
@@ -77,11 +82,6 @@ class NanoSocketServer implements SocketServer {
       protected void onMessage(WebSocketFrame message) {
         message.setUnmasked();
         callback.accept(message.getTextPayload());
-        /*try {
-          sendFrame(message);
-        } catch (IOException e) {
-          throw new RuntimeException(e);
-        }*/
       }
 
       @Override
