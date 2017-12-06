@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 public class GiveMeUi {
   private static final String MESSAGE_DELIMITER = "\n";
@@ -21,7 +22,7 @@ public class GiveMeUi {
   private String resourcesRoot;
   private Map<String, Consumer<String>> handlers = new HashMap<>();
   private Consumer<String> defaultHandler = msg -> {};
-  private UiServer server;
+  private UiServer server = createUiServer();
   private boolean started;
 
   private void shouldBeStarted(boolean flag) {
@@ -64,6 +65,12 @@ public class GiveMeUi {
     return this;
   }
 
+  public GiveMeUi bindPath(String path, String contentType, Supplier<String> response) {
+    shouldBeStarted(false);
+    server.bindPath(path, contentType, response);
+    return this;
+  }
+
   public void send(String event, String message) {
     shouldBeStarted(true);
     server.send(event + MESSAGE_DELIMITER + message);
@@ -72,7 +79,6 @@ public class GiveMeUi {
   public GiveMeUi start() {
     shouldBeStarted(false);
     started = true;
-    server = createUiServer();
     server.bindPath("/givemeui_client.js", "text/javascript", () ->
       readFile("givemeui_client.js")
           .replace("HOST", HOST)
