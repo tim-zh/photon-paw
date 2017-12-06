@@ -6,7 +6,7 @@
 </head>
 <body>
 <script>
-  let ws = new WebSocket("ws://localhost:8080/");
+  let ws = new WebSocket("ws://localhost:8082/");
   ws.onmessage = function (msg) {
     alert(msg.data);
   };

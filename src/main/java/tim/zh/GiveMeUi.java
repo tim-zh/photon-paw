@@ -13,8 +13,8 @@ public class GiveMeUi {
   private static final String MESSAGE_DELIMITER = "\n";
   private static final String HOST = "localhost";
 
-  private int port = 8080;
-  private int wsPort = 8081;
+  private int port = 8081;
+  private int wsPort = 8082;
   private String resourcesRoot;
   private Map<String, Consumer<String>> handlers = new HashMap<>();
   private Consumer<String> defaultHandler = msg -> {};
@@ -28,7 +28,7 @@ public class GiveMeUi {
   }
 
   protected UiServer createUiServer() {
-    return new NanoHttpdServer();
+    return new UndertowServer();
   }
 
   public GiveMeUi port(int number) {

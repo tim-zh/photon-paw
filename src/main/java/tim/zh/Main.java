@@ -12,7 +12,7 @@ public class Main {
         })
         .start()
         .println("press enter to stop")
-        //.openBrowser()
+        .openBrowser()
         .waitForInput()
         .stop();
   }
