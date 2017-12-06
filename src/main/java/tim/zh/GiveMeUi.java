@@ -3,14 +3,17 @@ package tim.zh;
 import java.awt.Desktop;
 import java.awt.GraphicsEnvironment;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Scanner;
 import java.util.function.Consumer;
 
 public class GiveMeUi {
   private static final String MESSAGE_DELIMITER = "\n";
+  private static final String ESCAPED_MESSAGE_DELIMITER = "\\n";
   private static final String HOST = "localhost";
 
   private int port = 8081;
@@ -70,6 +73,12 @@ public class GiveMeUi {
     shouldBeStarted(false);
     started = true;
     server = createUiServer();
+    server.bindPath("/givemeui_client.js", "text/javascript", () ->
+      readFile("givemeui_client.js")
+          .replace("HOST", HOST)
+          .replace("PORT", wsPort + "")
+          .replace("MESSAGE_DELIMITER", ESCAPED_MESSAGE_DELIMITER)
+    );
     server.start(HOST, port, wsPort, resourcesRoot, msg -> {
       String[] parts = msg.split(MESSAGE_DELIMITER, 2);
       if (parts.length == 2) {
@@ -79,6 +88,12 @@ public class GiveMeUi {
       }
     });
     return this;
+  }
+
+  private static String readFile(String path) {
+    InputStream stream = UndertowServer.class.getClassLoader().getResourceAsStream(path);
+    Scanner s = new Scanner(stream).useDelimiter("\\A");
+    return s.hasNext() ? s.next() : "";
   }
 
   public GiveMeUi println(Object o) {

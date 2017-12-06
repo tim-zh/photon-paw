@@ -24,6 +24,6 @@ GiveMeUi = {
     return GiveMeUi;
   },
   send: (eventName, message) => {
-    GiveMeUi.ws.send(eventName + "\n" + message);
+    GiveMeUi.ws.send(eventName + "MESSAGE_DELIMITER" + message);
   }
 };

@@ -1,6 +1,7 @@
 package tim.zh;
 
 import io.undertow.Undertow;
+import io.undertow.server.handlers.PathHandler;
 import io.undertow.server.handlers.resource.FileResourceManager;
 import io.undertow.util.Headers;
 import io.undertow.websockets.core.AbstractReceiveListener;
@@ -10,9 +11,8 @@ import io.undertow.websockets.core.WebSockets;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.util.Scanner;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import static io.undertow.Handlers.path;
 import static io.undertow.Handlers.resource;
@@ -21,18 +21,12 @@ import static io.undertow.Handlers.websocket;
 public class UndertowServer implements UiServer {
   private Undertow server;
   private WebSocketChannel ws;
+  private PathHandler handler = path();
 
   @Override
   public void start(String host, int port, int wsPort, String resourceRoot, Consumer<String> wsCallback) {
     server = Undertow.builder()
-        .addHttpListener(port, host, path()
-            .addPrefixPath("/givemeui_client.js", exchange -> {
-              exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/javascript");
-              String response = readFile("givemeui_client.js")
-                  .replace("HOST", host)
-                  .replace("PORT", wsPort + "");
-              exchange.getResponseSender().send(response);
-            })
+        .addHttpListener(port, host, handler
             .addPrefixPath("/", resource(new FileResourceManager(new File(resourceRoot)))))
         .addHttpListener(wsPort, host, path().addPrefixPath("/", websocket((exchange, channel) -> {
           ws = channel;
@@ -41,12 +35,6 @@ public class UndertowServer implements UiServer {
         })))
         .build();
     server.start();
-  }
-
-  private String readFile(String path) {
-    InputStream stream = UndertowServer.class.getClassLoader().getResourceAsStream(path);
-    Scanner s = new Scanner(stream).useDelimiter("\\A");
-    return s.hasNext() ? s.next() : "";
   }
 
   @Override
@@ -63,10 +51,18 @@ public class UndertowServer implements UiServer {
     }
   }
 
-  private static class MyAbstractReceiveListener extends AbstractReceiveListener {
-    private final Consumer<String> wsCallback;
+  @Override
+  public void bindPath(String path, String contentType, Supplier<String> response) {
+    handler.addPrefixPath(path, exchange -> {
+      exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, contentType);
+      exchange.getResponseSender().send(response.get());
+    });
+  }
 
-    public MyAbstractReceiveListener(Consumer<String> wsCallback) {
+  private static class MyAbstractReceiveListener extends AbstractReceiveListener {
+    Consumer<String> wsCallback;
+
+    MyAbstractReceiveListener(Consumer<String> wsCallback) {
       this.wsCallback = wsCallback;
     }
 
