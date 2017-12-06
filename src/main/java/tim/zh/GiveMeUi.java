@@ -10,41 +10,67 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 public class GiveMeUi {
+  private static final String MESSAGE_DELIMITER = "\n";
+  private static final String HOST = "localhost";
+
   private int port = 8080;
   private String resourcesRoot;
-  private Server server;
   private Map<String, Consumer<String>> handlers = new HashMap<>();
+  private Consumer<String> defaultHandler = msg -> {};
+  private UiServer server;
+  private boolean started;
 
-  public GiveMeUi port(int port) {
-    this.port = port;
+  private void shouldBeStarted(boolean flag) {
+    if (flag != started) {
+      throw new RuntimeException();
+    }
+  }
+
+  protected UiServer createUiServer() {
+    return new NanoHttpdServer();
+  }
+
+  public GiveMeUi port(int number) {
+    shouldBeStarted(false);
+    port = number;
     return this;
   }
 
-  public GiveMeUi resourcesRoot(String resourcesRoot) {
-    this.resourcesRoot = resourcesRoot;
+  public GiveMeUi resourcesRoot(String path) {
+    shouldBeStarted(false);
+    resourcesRoot = path;
     return this;
   }
 
   public GiveMeUi handler(String event, Consumer<String> handler) {
+    shouldBeStarted(false);
     handlers.put(event, handler);
     return this;
   }
 
+  public GiveMeUi defaultHandler(Consumer<String> handler) {
+    shouldBeStarted(false);
+    defaultHandler = handler;
+    return this;
+  }
+
   public void send(String event, String message) {
-    server.send(event + '\n' + message);
+    shouldBeStarted(true);
+    server.send(event + MESSAGE_DELIMITER + message);
   }
 
   public GiveMeUi start() {
-    server = new NanoHttpdServer(port);
-    server.resourceRoot(resourcesRoot);
-    server.onMessage(msg -> {
-      String[] parts = msg.split("\n");
-      if (parts.length != 2) {
-        throw new RuntimeException("invalid message " + msg);
+    shouldBeStarted(false);
+    started = true;
+    server = createUiServer();
+    server.start(HOST, port, resourcesRoot, msg -> {
+      String[] parts = msg.split(MESSAGE_DELIMITER, 2);
+      if (parts.length == 2) {
+        handlers.getOrDefault(parts[0], defaultHandler).accept(parts[1]);
+      } else {
+        defaultHandler.accept(msg);
       }
-      handlers.getOrDefault(parts[0], m -> {/*todo*/}).accept(parts[1]);
     });
-    server.start();
     return this;
   }
 
@@ -56,7 +82,7 @@ public class GiveMeUi {
   public GiveMeUi openBrowser() {
     if (! GraphicsEnvironment.isHeadless()) {
       try {
-        Desktop.getDesktop().browse(new URI("http://localhost:" + port + "/"));
+        Desktop.getDesktop().browse(new URI("http://" + HOST + ":" + port + "/"));
       } catch (IOException | URISyntaxException e) {
         throw new RuntimeException(e);
       }
@@ -74,6 +100,7 @@ public class GiveMeUi {
   }
 
   public GiveMeUi stop() {
+    shouldBeStarted(true);
     server.stop();
     return this;
   }
