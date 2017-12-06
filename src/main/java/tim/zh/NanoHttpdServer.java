@@ -11,7 +11,7 @@ class NanoHttpdServer implements UiServer {
   private Server server;
 
   @Override
-  public void start(String host, int port, String resourceRoot /*todo*/, Consumer<String> webSocketCallback) {
+  public void start(String host, int port, int wsPort, String resourceRoot /*todo*/, Consumer<String> webSocketCallback) {
     server = new Server(host, port);
     server.callback = webSocketCallback;
     try {
@@ -27,9 +27,9 @@ class NanoHttpdServer implements UiServer {
   }
 
   @Override
-  public void send(String webSocketMessage) {
+  public void send(String wsMessage) {
     try {
-      server.socket.send(webSocketMessage);
+      server.socket.send(wsMessage);
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
@@ -42,6 +42,11 @@ class NanoHttpdServer implements UiServer {
 
     Server(String host, int port) {
       super(host, port);
+    }
+
+    @Override
+    protected Response serveHttp(IHTTPSession session) {
+      return super.serveHttp(session);
     }
 
     @Override

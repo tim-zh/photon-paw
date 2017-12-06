@@ -14,6 +14,7 @@ public class GiveMeUi {
   private static final String HOST = "localhost";
 
   private int port = 8080;
+  private int wsPort = 8081;
   private String resourcesRoot;
   private Map<String, Consumer<String>> handlers = new HashMap<>();
   private Consumer<String> defaultHandler = msg -> {};
@@ -33,6 +34,12 @@ public class GiveMeUi {
   public GiveMeUi port(int number) {
     shouldBeStarted(false);
     port = number;
+    return this;
+  }
+
+  public GiveMeUi wsPort(int number) {
+    shouldBeStarted(false);
+    wsPort = number;
     return this;
   }
 
@@ -63,7 +70,7 @@ public class GiveMeUi {
     shouldBeStarted(false);
     started = true;
     server = createUiServer();
-    server.start(HOST, port, resourcesRoot, msg -> {
+    server.start(HOST, port, wsPort, resourcesRoot, msg -> {
       String[] parts = msg.split(MESSAGE_DELIMITER, 2);
       if (parts.length == 2) {
         handlers.getOrDefault(parts[0], defaultHandler).accept(parts[1]);
