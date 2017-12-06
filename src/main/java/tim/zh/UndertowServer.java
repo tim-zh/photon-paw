@@ -8,6 +8,7 @@ import io.undertow.websockets.core.WebSocketChannel;
 import io.undertow.websockets.core.WebSockets;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.function.Consumer;
 
 import static io.undertow.Handlers.path;
@@ -16,20 +17,16 @@ import static io.undertow.Handlers.websocket;
 
 public class UndertowServer implements UiServer {
   private Undertow server;
+  private WebSocketChannel ws;
 
   @Override
-  public void start(String host, int port, int wsPort, String resourceRoot, Consumer<String> webSocketCallback) {
+  public void start(String host, int port, int wsPort, String resourceRoot, Consumer<String> wsCallback) {
     server = Undertow.builder()
         .addHttpListener(port, host, path().addPrefixPath("/", resource(new FileResourceManager(new File(resourceRoot)))))
         .addHttpListener(wsPort, host, path().addPrefixPath("/", websocket((exchange, channel) -> {
-          channel.getReceiveSetter().set(new AbstractReceiveListener() {
-            @Override
-            protected void onFullTextMessage(WebSocketChannel channel, BufferedTextMessage message) {
-              final String messageData = message.getData();
-              WebSockets.sendText(messageData, channel, null);
-            }
-          });
-          channel.resumeReceives();
+          ws = channel;
+          ws.getReceiveSetter().set(new MyAbstractReceiveListener(wsCallback));
+          ws.resumeReceives();
         })))
         .build();
     server.start();
@@ -42,6 +39,23 @@ public class UndertowServer implements UiServer {
 
   @Override
   public void send(String wsMessage) {
-    //todo
+    try {
+      WebSockets.sendTextBlocking(wsMessage, ws);
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  private static class MyAbstractReceiveListener extends AbstractReceiveListener {
+    private final Consumer<String> wsCallback;
+
+    public MyAbstractReceiveListener(Consumer<String> wsCallback) {
+      this.wsCallback = wsCallback;
+    }
+
+    @Override
+    protected void onFullTextMessage(WebSocketChannel channel, BufferedTextMessage message) {
+      wsCallback.accept(message.getData());
+    }
   }
 }
