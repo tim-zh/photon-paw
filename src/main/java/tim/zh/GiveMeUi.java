@@ -20,14 +20,14 @@ public class GiveMeUi {
     private int wsPort = 8082;
     private String resourcesRoot;
     private Map<String, Consumer<String>> handlers = new HashMap<>();
-    private Consumer<String> defaultHandler = msg -> {
-    };
+    private Consumer<String> defaultHandler = msg -> {};
     private UiServer server = createUiServer();
     private boolean started;
 
-    private void shouldBeStarted(boolean flag) {
+    private void mustBeStarted(boolean flag) {
         if (flag != started) {
-            throw new RuntimeException();
+            String must = flag ? "must" : "must not";
+            throw new RuntimeException("Server " + must + " be started");
         }
     }
 
@@ -36,48 +36,48 @@ public class GiveMeUi {
     }
 
     public GiveMeUi port(int number) {
-        shouldBeStarted(false);
+        mustBeStarted(false);
         port = number;
         return this;
     }
 
     public GiveMeUi wsPort(int number) {
-        shouldBeStarted(false);
+        mustBeStarted(false);
         wsPort = number;
         return this;
     }
 
     public GiveMeUi resourcesRoot(String path) {
-        shouldBeStarted(false);
+        mustBeStarted(false);
         resourcesRoot = path;
         return this;
     }
 
     public GiveMeUi handler(String event, Consumer<String> handler) {
-        shouldBeStarted(false);
+        mustBeStarted(false);
         handlers.put(event, handler);
         return this;
     }
 
     public GiveMeUi defaultHandler(Consumer<String> handler) {
-        shouldBeStarted(false);
+        mustBeStarted(false);
         defaultHandler = handler;
         return this;
     }
 
     public GiveMeUi bindPath(String path, String contentType, Supplier<String> response) {
-        shouldBeStarted(false);
+        mustBeStarted(false);
         server.bindPath(path, contentType, response);
         return this;
     }
 
     public void send(String event, String message) {
-        shouldBeStarted(true);
+        mustBeStarted(true);
         server.send(event + MESSAGE_DELIMITER + message);
     }
 
     public GiveMeUi start() {
-        shouldBeStarted(false);
+        mustBeStarted(false);
         started = true;
         server.bindPath("/givemeui_client.js", "text/javascript", () ->
                 readFile("givemeui_client.js")
@@ -127,7 +127,7 @@ public class GiveMeUi {
     }
 
     public GiveMeUi stop() {
-        shouldBeStarted(true);
+        mustBeStarted(true);
         server.stop();
         return this;
     }
