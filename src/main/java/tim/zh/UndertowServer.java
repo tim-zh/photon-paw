@@ -19,56 +19,56 @@ import static io.undertow.Handlers.resource;
 import static io.undertow.Handlers.websocket;
 
 public class UndertowServer implements UiServer {
-  private Undertow server;
-  private WebSocketChannel ws;
-  private PathHandler handler = path();
+    private Undertow server;
+    private WebSocketChannel ws;
+    private PathHandler handler = path();
 
-  @Override
-  public void start(String host, int port, int wsPort, String resourceRoot, Consumer<String> wsCallback) {
-    server = Undertow.builder()
-        .addHttpListener(port, host, handler
-            .addPrefixPath("/", resource(new FileResourceManager(new File(resourceRoot)))))
-        .addHttpListener(wsPort, host, path().addPrefixPath("/", websocket((exchange, channel) -> {
-          ws = channel;
-          ws.getReceiveSetter().set(new MyAbstractReceiveListener(wsCallback));
-          ws.resumeReceives();
-        })))
-        .build();
-    server.start();
-  }
-
-  @Override
-  public void stop() {
-    server.stop();
-  }
-
-  @Override
-  public void send(String wsMessage) {
-    try {
-      WebSockets.sendTextBlocking(wsMessage, ws);
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  @Override
-  public void bindPath(String path, String contentType, Supplier<String> response) {
-    handler.addPrefixPath(path, exchange -> {
-      exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, contentType);
-      exchange.getResponseSender().send(response.get());
-    });
-  }
-
-  private static class MyAbstractReceiveListener extends AbstractReceiveListener {
-    Consumer<String> wsCallback;
-
-    MyAbstractReceiveListener(Consumer<String> wsCallback) {
-      this.wsCallback = wsCallback;
+    @Override
+    public void start(int port, int wsPort, String resourceRoot, Consumer<String> wsCallback) {
+        server = Undertow.builder()
+                .addHttpListener(port, "localhost", handler
+                        .addPrefixPath("/", resource(new FileResourceManager(new File(resourceRoot)))))
+                .addHttpListener(wsPort, "localhost", path().addPrefixPath("/", websocket((exchange, channel) -> {
+                    ws = channel;
+                    ws.getReceiveSetter().set(new MyAbstractReceiveListener(wsCallback));
+                    ws.resumeReceives();
+                })))
+                .build();
+        server.start();
     }
 
     @Override
-    protected void onFullTextMessage(WebSocketChannel channel, BufferedTextMessage message) {
-      wsCallback.accept(message.getData());
+    public void stop() {
+        server.stop();
     }
-  }
+
+    @Override
+    public void send(String wsMessage) {
+        try {
+            WebSockets.sendTextBlocking(wsMessage, ws);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public void bindPath(String path, String contentType, Supplier<String> response) {
+        handler.addPrefixPath(path, exchange -> {
+            exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, contentType);
+            exchange.getResponseSender().send(response.get());
+        });
+    }
+
+    private static class MyAbstractReceiveListener extends AbstractReceiveListener {
+        Consumer<String> wsCallback;
+
+        MyAbstractReceiveListener(Consumer<String> wsCallback) {
+            this.wsCallback = wsCallback;
+        }
+
+        @Override
+        protected void onFullTextMessage(WebSocketChannel channel, BufferedTextMessage message) {
+            wsCallback.accept(message.getData());
+        }
+    }
 }
