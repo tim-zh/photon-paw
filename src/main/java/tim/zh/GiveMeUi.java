@@ -16,8 +16,8 @@ public class GiveMeUi {
     private static final String MESSAGE_DELIMITER = "\n";
     private static final String ESCAPED_MESSAGE_DELIMITER = "\\n";
 
-    private int port = 8081;
-    private int wsPort = 8082;
+    private int port = 8080;
+    private int wsPort = 8081;
     private String resourcesRoot;
     private Map<String, Consumer<String>> handlers = new HashMap<>();
     private Consumer<String> defaultHandler = msg -> {};
@@ -35,15 +35,13 @@ public class GiveMeUi {
         return new UndertowServer();
     }
 
-    public GiveMeUi port(int number) {
+    public GiveMeUi ports(int http, int ws) {
         mustBeStarted(false);
-        port = number;
-        return this;
-    }
-
-    public GiveMeUi wsPort(int number) {
-        mustBeStarted(false);
-        wsPort = number;
+        if (http == ws) {
+            throw new RuntimeException("HTTP port must differ from WebSocket port");
+        }
+        port = http;
+        wsPort = ws;
         return this;
     }
 
