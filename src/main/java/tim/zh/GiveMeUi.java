@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 public class GiveMeUi {
@@ -19,7 +20,8 @@ public class GiveMeUi {
     private int port = 8080;
     private int wsPort = 8081;
     private String resourcesRoot;
-    private Map<String, Consumer<String>> handlers = new HashMap<>();
+    private Map<String, Consumer<String>> commandHandlers = new HashMap<>();
+    private Map<String, Function<String, String>> queryHandlers = new HashMap<>();
     private Consumer<String> defaultHandler = msg -> {};
     private UiServer server = createUiServer();
     private boolean started;
@@ -51,9 +53,15 @@ public class GiveMeUi {
         return this;
     }
 
-    public GiveMeUi handler(String event, Consumer<String> handler) {
+    public GiveMeUi subscribeCommand(String event, Consumer<String> handler) {
         mustBeStarted(false);
-        handlers.put(event, handler);
+        commandHandlers.put(event, handler);
+        return this;
+    }
+
+    public GiveMeUi subscribeQuery(String event, Function<String, String> handler) {
+        mustBeStarted(false);
+        queryHandlers.put(event, handler);
         return this;
     }
 
@@ -69,9 +77,13 @@ public class GiveMeUi {
         return this;
     }
 
-    public void send(String event, String message) {
+    private void send(String event, String correlationId, String message) {
         mustBeStarted(true);
-        server.send(event + MESSAGE_DELIMITER + message);
+        server.send(event + MESSAGE_DELIMITER + correlationId + MESSAGE_DELIMITER + message);
+    }
+
+    public void send(String event, String message) {
+        send(event, "", message);
     }
 
     public GiveMeUi start() {
@@ -83,9 +95,18 @@ public class GiveMeUi {
                         .replace("MESSAGE_DELIMITER", ESCAPED_MESSAGE_DELIMITER)
         );
         server.start(port, wsPort, resourcesRoot, msg -> {
-            String[] parts = msg.split(MESSAGE_DELIMITER, 2);
-            if (parts.length == 2) {
-                handlers.getOrDefault(parts[0], defaultHandler).accept(parts[1]);
+            String[] parts = msg.split(MESSAGE_DELIMITER, 3);
+            if (parts.length == 3) {
+                String eventName = parts[0];
+                String correlationId = parts[1];
+                String data = parts[2];
+
+                if (! correlationId.isEmpty() && queryHandlers.containsKey(eventName)) {
+                    String result = queryHandlers.get(eventName).apply(data);
+                    send(eventName, correlationId, result);
+                } else {
+                    commandHandlers.getOrDefault(eventName, defaultHandler).accept(data);
+                }
             } else {
                 defaultHandler.accept(msg);
             }
