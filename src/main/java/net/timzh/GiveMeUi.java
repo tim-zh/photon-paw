@@ -1,4 +1,4 @@
-package tim.zh;
+package net.timzh;
 
 import java.awt.Desktop;
 import java.awt.GraphicsEnvironment;
