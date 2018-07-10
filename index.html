@@ -3,16 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <title></title>
-  <script src="givemeui_client.js"></script>
+  <script src="photonpaw_client.js"></script>
 </head>
 <body>
 <script>
-  GiveMeUi.subscribe("b", msg => {
-    alert(msg + "!");
-  }).start(() => {
-    GiveMeUi.send("a", "123!");
-    GiveMeUi.ask("c", "cc").then(response => alert(response));
-  });
+    PhotonPaw.subscribe("b", msg => {
+        alert(msg + "!");
+    }).start(() => {
+        PhotonPaw.send("a", "123!");
+        PhotonPaw.ask("c", "cc").then(response => alert(response));
+    });
 </script>
 </body>
 </html>

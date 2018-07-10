@@ -13,7 +13,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-public class GiveMeUi {
+public class PhotonPaw {
     private static final String MESSAGE_DELIMITER = "\n";
     private static final String ESCAPED_MESSAGE_DELIMITER = "\\n";
 
@@ -37,7 +37,7 @@ public class GiveMeUi {
         return new UndertowServer();
     }
 
-    public GiveMeUi ports(int http, int ws) {
+    public PhotonPaw ports(int http, int ws) {
         mustBeStarted(false);
         if (http == ws) {
             throw new RuntimeException("HTTP port must differ from WebSocket port");
@@ -47,31 +47,31 @@ public class GiveMeUi {
         return this;
     }
 
-    public GiveMeUi resourcesRoot(String path) {
+    public PhotonPaw resourcesRoot(String path) {
         mustBeStarted(false);
         resourcesRoot = path;
         return this;
     }
 
-    public GiveMeUi subscribeCommand(String event, Consumer<String> handler) {
+    public PhotonPaw handleCommand(String event, Consumer<String> handler) {
         mustBeStarted(false);
         commandHandlers.put(event, handler);
         return this;
     }
 
-    public GiveMeUi subscribeQuery(String event, Function<String, String> handler) {
+    public PhotonPaw handleQuery(String event, Function<String, String> handler) {
         mustBeStarted(false);
         queryHandlers.put(event, handler);
         return this;
     }
 
-    public GiveMeUi defaultHandler(Consumer<String> handler) {
+    public PhotonPaw defaultHandler(Consumer<String> handler) {
         mustBeStarted(false);
         defaultHandler = handler;
         return this;
     }
 
-    public GiveMeUi bindPath(String path, String contentType, Supplier<String> response) {
+    public PhotonPaw bindPath(String path, String contentType, Supplier<String> response) {
         mustBeStarted(false);
         server.bindPath(path, contentType, response);
         return this;
@@ -86,11 +86,11 @@ public class GiveMeUi {
         send(event, "", message);
     }
 
-    public GiveMeUi start() {
+    public PhotonPaw start() {
         mustBeStarted(false);
         started = true;
-        server.bindPath("/givemeui_client.js", "text/javascript", () ->
-                readFile("givemeui_client.js")
+        server.bindPath("/photonpaw_client.js", "text/javascript", () ->
+                readFile("photonpaw_client.js")
                         .replace("PORT", wsPort + "")
                         .replace("MESSAGE_DELIMITER", ESCAPED_MESSAGE_DELIMITER)
         );
@@ -120,12 +120,12 @@ public class GiveMeUi {
         return s.hasNext() ? s.next() : "";
     }
 
-    public GiveMeUi println(Object o) {
+    public PhotonPaw println(Object o) {
         System.out.println(o);
         return this;
     }
 
-    public GiveMeUi openBrowser() {
+    public PhotonPaw openBrowser() {
         if (! GraphicsEnvironment.isHeadless()) {
             try {
                 Desktop.getDesktop().browse(new URI("http://localhost:" + port + "/"));
@@ -136,7 +136,7 @@ public class GiveMeUi {
         return this;
     }
 
-    public GiveMeUi waitForInput() {
+    public PhotonPaw waitForInput() {
         try {
             System.in.read();
         } catch (IOException e) {
@@ -145,7 +145,7 @@ public class GiveMeUi {
         return this;
     }
 
-    public GiveMeUi stop() {
+    public PhotonPaw stop() {
         mustBeStarted(true);
         server.stop();
         return this;

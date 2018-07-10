@@ -4,14 +4,14 @@
     let ws;
     let askMap = []; //correlation id to promise resolve
     let correlationIdSeed = 0;
-    window.GiveMeUi = {
+    window.PhotonPaw = {
         subscribe: (eventName, callback) => {
             handlers[eventName] = callback;
-            return GiveMeUi;
+            return PhotonPaw;
         },
         setDefaultHandler: function (callback) {
             defaultHandler = callback;
-            return GiveMeUi;
+            return PhotonPaw;
         },
         start: onStarted => {
             ws = new WebSocket("ws://localhost:PORT/");
@@ -34,7 +34,7 @@
                 }
             };
             ws.onopen = onStarted;
-            return GiveMeUi;
+            return PhotonPaw;
         },
         send: (eventName, message) => {
             ws.send(eventName + "MESSAGE_DELIMITER" + "MESSAGE_DELIMITER" + message);

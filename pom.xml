@@ -5,7 +5,7 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>tim.zh</groupId>
-  <artifactId>givemeui</artifactId>
+  <artifactId>PhotonPaw</artifactId>
   <version>1.0</version>
   <build>
     <plugins>

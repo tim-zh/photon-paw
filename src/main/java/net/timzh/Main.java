@@ -2,15 +2,15 @@ package net.timzh;
 
 public class Main {
     public static void main(String[] args) {
-        GiveMeUi ui = new GiveMeUi();
+        PhotonPaw ui = new PhotonPaw();
         ui
                 .ports(8081, 8082)
                 .resourcesRoot(".")
-                .subscribeCommand("a", msg -> {
+                .handleCommand("a", msg -> {
                     System.out.println(msg);
                     ui.send("b", msg + "!");
                 })
-                .subscribeQuery("c", msg -> {
+                .handleQuery("c", msg -> {
                     System.out.println(msg);
                     return msg + "!!!";
                 })
