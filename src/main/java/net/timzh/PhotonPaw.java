@@ -9,6 +9,7 @@ import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -22,7 +23,7 @@ public class PhotonPaw {
     private String resourcesRoot;
     private Map<String, Consumer<String>> commandHandlers = new HashMap<>();
     private Map<String, Function<String, String>> queryHandlers = new HashMap<>();
-    private Consumer<String> defaultHandler = msg -> {};
+    private BiConsumer<String, String> defaultHandler = (event, msg) -> {};
     private UiServer server = createUiServer();
     private boolean started;
 
@@ -65,7 +66,7 @@ public class PhotonPaw {
         return this;
     }
 
-    public PhotonPaw defaultHandler(Consumer<String> handler) {
+    public PhotonPaw defaultHandler(BiConsumer<String, String> handler) {
         mustBeStarted(false);
         defaultHandler = handler;
         return this;
@@ -105,10 +106,10 @@ public class PhotonPaw {
                     String result = queryHandlers.get(eventName).apply(data);
                     send(eventName, correlationId, result);
                 } else {
-                    commandHandlers.getOrDefault(eventName, defaultHandler).accept(data);
+                    commandHandlers.getOrDefault(eventName, x -> defaultHandler.accept("", x)).accept(data);
                 }
             } else {
-                defaultHandler.accept(msg);
+                defaultHandler.accept("", msg);
             }
         });
         return this;

@@ -1,6 +1,6 @@
 {
     let handlers = []; //event name to callback
-    let defaultHandler = message => console.log("unprocessed message:\n" + message);
+    let defaultHandler = (eventName, message) => console.log("unprocessed message:\n" + eventName + "\n" + message);
     let ws;
     let askMap = []; //correlation id to promise resolve
     let correlationIdSeed = 0;
@@ -27,10 +27,10 @@
                     } else if (handlers[eventName]) {
                         handlers[eventName](data);
                     } else {
-                        defaultHandler(message.data);
+                        defaultHandler(eventName, data);
                     }
                 } else {
-                    defaultHandler(message.data);
+                    defaultHandler("", message.data);
                 }
             };
             ws.onopen = onStarted;
