@@ -5,7 +5,7 @@
     let askMap = []; //correlation id to promise resolve
     let correlationIdSeed = 0;
     window.PhotonPaw = {
-        subscribe: (eventName, callback) => {
+        handleCommand: (eventName, callback) => {
             handlers[eventName] = callback;
             return PhotonPaw;
         },
