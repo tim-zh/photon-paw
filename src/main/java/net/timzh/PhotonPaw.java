@@ -14,7 +14,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-public class PhotonPaw {
+public class PhotonPaw implements AutoCloseable {
     private static final String MESSAGE_DELIMITER = "\n";
     private static final String ESCAPED_MESSAGE_DELIMITER = "\\n";
 
@@ -150,5 +150,10 @@ public class PhotonPaw {
         mustBeStarted(true);
         server.stop();
         return this;
+    }
+
+    @Override
+    public void close() throws Exception {
+        stop();
     }
 }
