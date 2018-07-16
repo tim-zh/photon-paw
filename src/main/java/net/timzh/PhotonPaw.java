@@ -110,7 +110,7 @@ public class PhotonPaw implements AutoCloseable {
                     String result = queryHandlers.get(eventName).apply(data);
                     send(eventName, correlationId, result);
                 } else {
-                    commandHandlers.getOrDefault(eventName, x -> defaultHandler.accept("", x)).accept(data);
+                    commandHandlers.getOrDefault(eventName, x -> defaultHandler.accept(eventName, x)).accept(data);
                 }
             } else {
                 defaultHandler.accept("", msg);
