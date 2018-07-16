@@ -40,7 +40,7 @@ public class UndertowServer implements UiServer {
 
     @Override
     public void stop() {
-        if (ws != null) {
+        if (ws != null && !ws.isCloseFrameReceived()) {
             try {
                 ws.sendClose();
             } catch (IOException e) {
