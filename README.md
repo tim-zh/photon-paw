@@ -4,13 +4,31 @@
 ```java
 PhotonPaw paw = new PhotonPaw();
 paw
+    //optionally configure main port and websocket port
     .ports(19081, 19082)
+
+    //set location of static resources if any
     .resourcesRoot(".")
+
+    //add additional routes if static resources are not enough
     .bindPath("/test", "text/javascript", () -> "alert('custom routing')")
+
+    //subscribe to events from ui by name
     .handleCommand("a", msg -> System.out.println("command received"))
+
+    //subscribe to requests from ui which expect some response
     .handleQuery("b", msg -> "server response")
+
+    //subscribe to events with unknown or dynamic names
     .defaultHandler((event, msg) -> System.out.println("unknown event " + event + " " + msg))
-    .start(() -> paw.send("b", "server command"))
+
+    //execute some code after establishing the connection with ui
+    .start(() ->
+
+         //send an event to ui
+         paw.send("b", "server command")
+    )
+
     .println("press enter to stop")
     .openBrowser()
     .waitForInput()
@@ -27,11 +45,20 @@ paw
 <body>
 <script>
 PhotonPaw
+    //subscribe to events from ui server by name
     .handleCommand("a", msg => alert("command received"))
+
+    //subscribe to events with unknown or dynamic names
     .setDefaultHandler((event, msg) => "unknown event " + event + " " + msg)
+
+    //execute some code after establishing the connection with ui server
     .start(() => {
-        PhotonPaw.ask("b", "frontend query").then(response => alert("query response received"));
-        PhotonPaw.send("c", "ui command");
+
+        //send an event to ui server
+        PhotonPaw.send("b", "ui command");
+
+        //send a request to ui server and process the response
+        PhotonPaw.ask("c", "frontend query").then(response => alert("query response received"));
     });
 </script>
 </body>
