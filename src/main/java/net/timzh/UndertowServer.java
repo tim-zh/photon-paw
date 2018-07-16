@@ -24,7 +24,7 @@ public class UndertowServer implements UiServer {
     private PathHandler handler = path();
 
     @Override
-    public void start(int port, int wsPort, String resourceRoot, Consumer<String> wsCallback) {
+    public void start(int port, int wsPort, String resourceRoot, Consumer<String> wsCallback, Runnable onStart) {
         server = Undertow.builder()
                 .addHttpListener(port, "localhost", handler
                         .addPrefixPath("/", resource(new FileResourceManager(new File(resourceRoot)))))
@@ -32,6 +32,7 @@ public class UndertowServer implements UiServer {
                     ws = channel;
                     ws.getReceiveSetter().set(new MyAbstractReceiveListener(wsCallback));
                     ws.resumeReceives();
+                    onStart.run();
                 })))
                 .build();
         server.start();
@@ -39,11 +40,21 @@ public class UndertowServer implements UiServer {
 
     @Override
     public void stop() {
+        if (ws != null) {
+            try {
+                ws.sendClose();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
         server.stop();
     }
 
     @Override
     public void send(String wsMessage) {
+        if (ws == null) {
+            throw new NullPointerException("websocket connection hasn't been established");
+        }
         try {
             WebSockets.sendTextBlocking(wsMessage, ws);
         } catch (IOException e) {

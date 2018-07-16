@@ -88,6 +88,10 @@ public class PhotonPaw implements AutoCloseable {
     }
 
     public PhotonPaw start() {
+        return start(() -> {});
+    }
+
+    public PhotonPaw start(Runnable onStart) {
         mustBeStarted(false);
         started = true;
         server.bindPath("/photonpaw_client.js", "text/javascript", () ->
@@ -111,7 +115,7 @@ public class PhotonPaw implements AutoCloseable {
             } else {
                 defaultHandler.accept("", msg);
             }
-        });
+        }, onStart);
         return this;
     }
 
@@ -153,7 +157,7 @@ public class PhotonPaw implements AutoCloseable {
     }
 
     @Override
-    public void close() throws Exception {
+    public void close() {
         stop();
     }
 }

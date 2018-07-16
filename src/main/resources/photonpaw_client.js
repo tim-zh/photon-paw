@@ -33,7 +33,7 @@
                     defaultHandler("", message.data);
                 }
             };
-            ws.onopen = onStarted;
+            ws.onopen = onStarted || (() => {});
             return PhotonPaw;
         },
         send: (eventName, message) => {
