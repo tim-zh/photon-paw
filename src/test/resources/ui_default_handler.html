@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <script src="photonpaw_client.js"></script>
+</head>
+<body>
+<script>
+    PhotonPaw.setDefaultHandler((event, msg) => {
+        PhotonPaw.send("b", event + msg);
+    }).start();
+</script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <script src="photonpaw_client.js"></script>
+</head>
+<body>
+<script>
+    PhotonPaw.start(() => {
+        PhotonPaw.ask("a", "ui query").then(msg => {
+            PhotonPaw.send("b", msg);
+        });
+    });
+</script>
+</body>
+</html>
