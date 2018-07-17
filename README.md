@@ -11,12 +11,12 @@ paw
     .resourcesRoot(".")
 
     //add additional routes if static resources are not enough
-    .bindPath("/test", "text/javascript", () -> "alert('custom routing')")
+    .bindPath("/test", "application/javascript", () -> "alert('custom routing')")
 
     //subscribe to events from ui by name
     .handleCommand("a", msg -> System.out.println("command received"))
 
-    //subscribe to requests from ui which expect some response
+    //subscribe to requests from ui that expect some response
     .handleQuery("b", msg -> "server response")
 
     //subscribe to events with unknown or dynamic names
@@ -49,7 +49,7 @@ PhotonPaw
     .handleCommand("a", msg => alert("command received"))
 
     //subscribe to events with unknown or dynamic names
-    .setDefaultHandler((event, msg) => "unknown event " + event + " " + msg)
+    .defaultHandler((event, msg) => alert("unknown event " + event + " " + msg))
 
     //execute some code after establishing the connection with ui server
     .start(() => {
