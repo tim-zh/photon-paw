@@ -5,7 +5,7 @@
 </head>
 <body>
 <script>
-    PhotonPaw.setDefaultHandler((event, msg) => {
+    PhotonPaw.defaultHandler((event, msg) => {
         PhotonPaw.send("b", event + msg);
     }).start();
 </script>

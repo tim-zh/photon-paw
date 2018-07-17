@@ -9,7 +9,7 @@
             handlers[eventName] = callback;
             return PhotonPaw;
         },
-        setDefaultHandler: function (callback) {
+        defaultHandler: function (callback) {
             defaultHandler = callback;
             return PhotonPaw;
         },

@@ -94,7 +94,7 @@ public class PhotonPaw implements AutoCloseable {
     public PhotonPaw start(Runnable onStart) {
         mustBeStarted(false);
         started = true;
-        server.bindPath("/photonpaw_client.js", "text/javascript", () ->
+        server.bindPath("/photonpaw_client.js", "application/javascript", () ->
                 readFile("photonpaw_client.js")
                         .replace("PORT", wsPort + "")
                         .replace("MESSAGE_DELIMITER", ESCAPED_MESSAGE_DELIMITER)
