@@ -37,13 +37,13 @@
             return PhotonPaw;
         },
         send: (eventName, message) => {
-            ws.send(eventName + "MESSAGE_DELIMITER" + "MESSAGE_DELIMITER" + message);
+            ws.send(eventName + "MESSAGE_PARTS_DELIMITER" + "MESSAGE_PARTS_DELIMITER" + message);
         },
         ask: (eventName, message) => {
             return new Promise((resolve, reject) => {
                 let correlationId = correlationIdSeed;
                 correlationIdSeed += 1;
-                ws.send(eventName + "MESSAGE_DELIMITER" + correlationId + "MESSAGE_DELIMITER" + message);
+                ws.send(eventName + "MESSAGE_PARTS_DELIMITER" + correlationId + "MESSAGE_PARTS_DELIMITER" + message);
                 askMap[correlationId] = resolve;
             });
         }

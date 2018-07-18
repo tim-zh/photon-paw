@@ -1,5 +1,7 @@
 package net.timzh;
 
+import org.apache.commons.text.StringEscapeUtils;
+
 import java.awt.Desktop;
 import java.awt.GraphicsEnvironment;
 import java.io.IOException;
@@ -18,8 +20,7 @@ import java.util.function.Supplier;
  * An easy and convenient way to add HTML-based UI to a console app
  */
 public class PhotonPaw implements AutoCloseable {
-    private static final String MESSAGE_DELIMITER = "\n";
-    private static final String ESCAPED_MESSAGE_DELIMITER = "\\n";
+    private static final String MESSAGE_PARTS_DELIMITER = "\n";
 
     private int port = 8080;
     private int wsPort = 8081;
@@ -129,7 +130,7 @@ public class PhotonPaw implements AutoCloseable {
 
     private void send(String event, String correlationId, String message) {
         mustBeStarted(true);
-        server.send(event + MESSAGE_DELIMITER + correlationId + MESSAGE_DELIMITER + message);
+        server.send(event + MESSAGE_PARTS_DELIMITER + correlationId + MESSAGE_PARTS_DELIMITER + message);
     }
 
     /**
@@ -163,10 +164,10 @@ public class PhotonPaw implements AutoCloseable {
         server.bindPath("/photonpaw_client.js", "application/javascript", () ->
                 readFile("photonpaw_client.js")
                         .replace("PORT", wsPort + "")
-                        .replace("MESSAGE_DELIMITER", ESCAPED_MESSAGE_DELIMITER)
+                        .replace("MESSAGE_PARTS_DELIMITER", StringEscapeUtils.escapeJava(MESSAGE_PARTS_DELIMITER))
         );
         server.start(port, wsPort, resourcesRoot, msg -> {
-            String[] parts = msg.split(MESSAGE_DELIMITER, 3);
+            String[] parts = msg.split(MESSAGE_PARTS_DELIMITER, 3);
             if (parts.length == 3) {
                 String eventName = parts[0];
                 String correlationId = parts[1];
