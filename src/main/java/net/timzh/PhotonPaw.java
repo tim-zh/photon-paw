@@ -14,6 +14,9 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+/**
+ * An easy and convenient way to add HTML-based UI to a console app
+ */
 public class PhotonPaw implements AutoCloseable {
     private static final String MESSAGE_DELIMITER = "\n";
     private static final String ESCAPED_MESSAGE_DELIMITER = "\\n";
@@ -34,10 +37,22 @@ public class PhotonPaw implements AutoCloseable {
         }
     }
 
+    /**
+     * Override this to use different underlying server
+     *
+     * @return ui server instance
+     */
     protected UiServer createUiServer() {
         return new UndertowServer();
     }
 
+    /**
+     * Configure ports
+     *
+     * @param http main http port
+     * @param ws   websocket port
+     * @return this instance
+     */
     public PhotonPaw ports(int http, int ws) {
         mustBeStarted(false);
         if (http == ws) {
@@ -48,30 +63,64 @@ public class PhotonPaw implements AutoCloseable {
         return this;
     }
 
+    /**
+     * Configure static resources location
+     *
+     * @param path path to a directory with static resources
+     * @return this instance
+     */
     public PhotonPaw resourcesRoot(String path) {
         mustBeStarted(false);
         resourcesRoot = path;
         return this;
     }
 
+    /**
+     * Add a handler for commands from ui by name
+     *
+     * @param event   event name
+     * @param handler command handler
+     * @return this instance
+     */
     public PhotonPaw handleCommand(String event, Consumer<String> handler) {
         mustBeStarted(false);
         commandHandlers.put(event, handler);
         return this;
     }
 
+    /**
+     * Add a handler for commands from ui that expect some response
+     *
+     * @param event   event name
+     * @param handler query handler
+     * @return this instance
+     */
     public PhotonPaw handleQuery(String event, Function<String, String> handler) {
         mustBeStarted(false);
         queryHandlers.put(event, handler);
         return this;
     }
 
+    /**
+     * Handler for all unprocessed messages
+     *
+     * @param handler default handler
+     * @return this instance
+     */
     public PhotonPaw defaultHandler(BiConsumer<String, String> handler) {
         mustBeStarted(false);
         defaultHandler = handler;
         return this;
     }
 
+    /**
+     * Configure custom response for a path
+     *
+     * @param path        url path to bind
+     * @param contentType response content type
+     * @param response    response supplier
+     * @return this instance
+     */
     public PhotonPaw bindPath(String path, String contentType, Supplier<String> response) {
         mustBeStarted(false);
         server.bindPath(path, contentType, response);
@@ -83,14 +132,31 @@ public class PhotonPaw implements AutoCloseable {
         server.send(event + MESSAGE_DELIMITER + correlationId + MESSAGE_DELIMITER + message);
     }
 
+    /**
+     * Send an event to ui
+     *
+     * @param event   event name
+     * @param message event body
+     */
     public void send(String event, String message) {
         send(event, "", message);
     }
 
+    /**
+     * Start the ui server
+     *
+     * @return this instance
+     */
     public PhotonPaw start() {
         return start(() -> {});
     }
 
+    /**
+     * Start the ui server
+     *
+     * @param onStart callback to execute after establishing a connection with ui
+     * @return this instance
+     */
     public PhotonPaw start(Runnable onStart) {
         mustBeStarted(false);
         started = true;
@@ -125,11 +191,22 @@ public class PhotonPaw implements AutoCloseable {
         return s.hasNext() ? s.next() : "";
     }
 
+    /**
+     * Convenient way to call {@code System.out.println}
+     *
+     * @param o object to print
+     * @return this instance
+     */
     public PhotonPaw println(Object o) {
         System.out.println(o);
         return this;
     }
 
+    /**
+     * Open system default browser
+     *
+     * @return this instance
+     */
     public PhotonPaw openBrowser() {
         if (! GraphicsEnvironment.isHeadless()) {
             try {
@@ -141,6 +218,11 @@ public class PhotonPaw implements AutoCloseable {
         return this;
     }
 
+    /**
+     * Wait for any input from {@code System.in}
+     *
+     * @return this instance
+     */
     public PhotonPaw waitForInput() {
         try {
             System.in.read();
@@ -150,6 +232,11 @@ public class PhotonPaw implements AutoCloseable {
         return this;
     }
 
+    /**
+     * Stop the ui server
+     *
+     * @return this instance
+     */
     public PhotonPaw stop() {
         mustBeStarted(true);
         server.stop();

@@ -18,7 +18,7 @@ import static io.undertow.Handlers.path;
 import static io.undertow.Handlers.resource;
 import static io.undertow.Handlers.websocket;
 
-public class UndertowServer implements UiServer {
+class UndertowServer implements UiServer {
     private Undertow server;
     private WebSocketChannel ws;
     private PathHandler handler = path();
