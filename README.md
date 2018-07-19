@@ -22,7 +22,7 @@ paw
     //subscribe to events with unknown or dynamic names
     .defaultHandler((event, msg) -> System.out.println("unknown event " + event + " " + msg))
 
-    //execute some code after establishing the connection with ui
+    //execute some code after establishing a connection with ui
     .start(() ->
 
          //send an event to ui
@@ -39,10 +39,8 @@ paw
 ```html
 <!DOCTYPE html>
 <html>
-<head>
-  <script src="photonpaw_client.js"></script>
-</head>
 <body>
+<script src="photonpaw_client.js"></script>
 <script>
 PhotonPaw
     //subscribe to events from ui server by name

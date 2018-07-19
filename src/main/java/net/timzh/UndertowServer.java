@@ -4,6 +4,7 @@ import io.undertow.Undertow;
 import io.undertow.server.handlers.PathHandler;
 import io.undertow.server.handlers.resource.FileResourceManager;
 import io.undertow.util.Headers;
+import io.undertow.websockets.WebSocketConnectionCallback;
 import io.undertow.websockets.core.AbstractReceiveListener;
 import io.undertow.websockets.core.BufferedTextMessage;
 import io.undertow.websockets.core.WebSocketChannel;
@@ -25,15 +26,20 @@ class UndertowServer implements UiServer {
 
     @Override
     public void start(int port, int wsPort, String resourceRoot, Consumer<String> wsCallback, Runnable onStart) {
-        server = Undertow.builder()
-                .addHttpListener(port, "localhost", handler
-                        .addPrefixPath("/", resource(new FileResourceManager(new File(resourceRoot)))))
-                .addHttpListener(wsPort, "localhost", path().addPrefixPath("/", websocket((exchange, channel) -> {
-                    ws = channel;
-                    ws.getReceiveSetter().set(new MyAbstractReceiveListener(wsCallback));
-                    ws.resumeReceives();
-                    onStart.run();
-                })))
+        Undertow.Builder builder = Undertow.builder();
+        if (resourceRoot != null) {
+            FileResourceManager fileManager = new FileResourceManager(new File(resourceRoot));
+            handler.addPrefixPath("/", resource(fileManager));
+        }
+        builder.addHttpListener(port, "localhost", handler);
+        WebSocketConnectionCallback callback = (exchange, channel) -> {
+            ws = channel;
+            ws.getReceiveSetter().set(new MyAbstractReceiveListener(wsCallback));
+            ws.resumeReceives();
+            onStart.run();
+        };
+        server = builder
+                .addHttpListener(wsPort, "localhost", path().addPrefixPath("/", websocket(callback)))
                 .build();
         server.start();
     }

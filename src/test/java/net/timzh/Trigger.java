@@ -14,7 +14,7 @@ class Trigger {
 
     void assertActivated() {
         try {
-            boolean triggered = latch.await(1, TimeUnit.SECONDS);
+            boolean triggered = latch.await(5, TimeUnit.SECONDS);
             assertTrue(triggered);
         } catch (InterruptedException ignored) {}
     }

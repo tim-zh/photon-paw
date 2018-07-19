@@ -29,6 +29,7 @@ public class PhotonPaw implements AutoCloseable {
     private Map<String, Function<String, String>> queryHandlers = new HashMap<>();
     private BiConsumer<String, String> defaultHandler = (event, msg) -> {};
     private UiServer server = createUiServer();
+    private boolean rootPathBound;
     private boolean started;
 
     private void mustBeStarted(boolean flag) {
@@ -72,6 +73,9 @@ public class PhotonPaw implements AutoCloseable {
      */
     public PhotonPaw resourcesRoot(String path) {
         mustBeStarted(false);
+        if (rootPathBound && path.equals("/")) {
+            throw new RuntimeException("Path \"/\" is already used by bindPath");
+        }
         resourcesRoot = path;
         return this;
     }
@@ -124,6 +128,13 @@ public class PhotonPaw implements AutoCloseable {
      */
     public PhotonPaw bindPath(String path, String contentType, Supplier<String> response) {
         mustBeStarted(false);
+        if (path.equals("/")) {
+            if (resourcesRoot != null) {
+                throw new RuntimeException("Path \"/\" is already used by resourcesRoot");
+            } else {
+                rootPathBound = true;
+            }
+        }
         server.bindPath(path, contentType, response);
         return this;
     }

@@ -14,7 +14,7 @@ class PhotonPawTests {
     private int port = 19081;
 
     @Test
-    void test_bindPath() {
+    void test_bind_path() {
         String testStr = "+";
         String testDoc = "<html><body>" + testStr + "</body></html>";
         try (PhotonPaw paw = createBackend()) {
@@ -121,13 +121,59 @@ class PhotonPawTests {
         }
     }
 
+    @Test
+    void test_default_config() {
+        Trigger commandReceived = new Trigger();
+        String testScript = "<script>PhotonPaw.start(() => PhotonPaw.send('a', 'ui command'))</script>";
+        String testDoc = "<html><body><script src='photonpaw_client.js'></script>" + testScript + "</body></html>";
+        try (PhotonPaw paw = new PhotonPaw()) {
+            paw.bindPath("/bind", "text/html", () -> testDoc).handleCommand("a", msg -> {
+                assertEquals("ui command", msg);
+                commandReceived.activate();
+            }).start();
+
+            withHtmlPage("/bind", 19080, page ->
+                    commandReceived.assertActivated()
+            );
+        }
+    }
+
+    @Test
+    void test_multiple_instances() {
+        Trigger command1Received = new Trigger();
+        Trigger command2Received = new Trigger();
+        try (PhotonPaw paw1 = new PhotonPaw().ports(port, port + 1).resourcesRoot("./src/test/resources")) {
+            try (PhotonPaw paw2 = new PhotonPaw().ports(port + 2, port + 3).resourcesRoot("./src/test/resources")) {
+                paw1.handleCommand("a", msg -> {
+                    assertEquals("ui command", msg);
+                    command1Received.activate();
+                }).start();
+                paw2.handleCommand("a", msg -> {
+                    assertEquals("ui command", msg);
+                    command2Received.activate();
+                }).start();
+
+                withHtmlPage("/handle_ui_command.html", port, page ->
+                        command1Received.assertActivated()
+                );
+                withHtmlPage("/handle_ui_command.html", port + 2, page ->
+                        command2Received.assertActivated()
+                );
+            }
+        }
+    }
+
     private PhotonPaw createBackend() {
         return new PhotonPaw().ports(port, port + 1).resourcesRoot("./src/test/resources");
     }
 
     private void withHtmlPage(String path, Consumer<HtmlPage> x) {
+        withHtmlPage(path, port, x);
+    }
+
+    private void withHtmlPage(String path, int customPort, Consumer<HtmlPage> x) {
         try (WebClient webClient = new WebClient(BrowserVersion.CHROME)) {
-            HtmlPage page = webClient.getPage("http://localhost:" + port + path);
+            HtmlPage page = webClient.getPage("http://localhost:" + customPort + path);
             x.accept(page);
         } catch (IOException e) {
             throw new RuntimeException(e);
