@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.util.function.Consumer;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 class PhotonPawTests {
     private int port = 19081;
@@ -132,7 +132,7 @@ class PhotonPawTests {
                 commandReceived.activate();
             }).start();
 
-            withHtmlPage("/bind", 19080, page ->
+            withHtmlPage("/bind", paw.getPort(), page ->
                     commandReceived.assertActivated()
             );
         }
@@ -157,6 +157,34 @@ class PhotonPawTests {
                         command1Received.assertActivated()
                 );
                 withHtmlPage("/handle_ui_command.html", port + 2, page ->
+                        command2Received.assertActivated()
+                );
+            }
+        }
+    }
+
+    @Test
+    void test_port_auto_selection() {
+        Trigger command1Received = new Trigger();
+        Trigger command2Received = new Trigger();
+        try (PhotonPaw paw1 = new PhotonPaw().resourcesRoot("./src/test/resources")) {
+            try (PhotonPaw paw2 = new PhotonPaw().resourcesRoot("./src/test/resources")) {
+                paw1.handleCommand("a", msg -> {
+                    assertEquals("ui command", msg);
+                    command1Received.activate();
+                }).start();
+                paw2.handleCommand("a", msg -> {
+                    assertEquals("ui command", msg);
+                    command2Received.activate();
+                }).start();
+
+                assertTrue(paw1.getPort() < paw2.getPort());
+                assertTrue(paw1.getWsPort() < paw2.getWsPort());
+
+                withHtmlPage("/handle_ui_command.html", paw1.getPort(), page ->
+                        command1Received.assertActivated()
+                );
+                withHtmlPage("/handle_ui_command.html", paw2.getPort(), page ->
                         command2Received.assertActivated()
                 );
             }

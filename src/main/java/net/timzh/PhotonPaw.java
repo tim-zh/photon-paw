@@ -6,6 +6,8 @@ import java.awt.Desktop;
 import java.awt.GraphicsEnvironment;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.DatagramSocket;
+import java.net.ServerSocket;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashMap;
@@ -21,9 +23,10 @@ import java.util.function.Supplier;
  */
 public class PhotonPaw implements AutoCloseable {
     private static final String MESSAGE_PARTS_DELIMITER = "\n";
+    private static final int START_PORT = 19080;
 
-    private int port = 8080;
-    private int wsPort = 8081;
+    private int port = -1;
+    private int wsPort = -1;
     private String resourcesRoot;
     private Map<String, Consumer<String>> commandHandlers = new HashMap<>();
     private Map<String, Function<String, String>> queryHandlers = new HashMap<>();
@@ -31,6 +34,41 @@ public class PhotonPaw implements AutoCloseable {
     private UiServer server = createUiServer();
     private boolean rootPathBound;
     private boolean started;
+
+    /**
+     * Main port
+     *
+     * @return main port
+     */
+    public int getPort() {
+        return port;
+    }
+
+    /**
+     * Websocket port
+     *
+     * @return websocket port
+     */
+    public int getWsPort() {
+        return wsPort;
+    }
+
+    private int firstAvailablePort(int startFrom) {
+        while (! isAvailable(startFrom)) {
+            ++startFrom;
+        }
+        return startFrom;
+    }
+
+    private boolean isAvailable(int portToCheck) {
+        try (ServerSocket ss = new ServerSocket(portToCheck); DatagramSocket ds = new DatagramSocket(portToCheck)) {
+            ss.setReuseAddress(true);
+            ds.setReuseAddress(true);
+            return true;
+        } catch (IOException ignored) {
+            return false;
+        }
+    }
 
     private void mustBeStarted(boolean flag) {
         if (flag != started) {
@@ -49,7 +87,7 @@ public class PhotonPaw implements AutoCloseable {
     }
 
     /**
-     * Configure ports
+     * Configure ports, {@code -1} (default value) to autoselect
      *
      * @param http main http port
      * @param ws   websocket port
@@ -177,6 +215,12 @@ public class PhotonPaw implements AutoCloseable {
                         .replace("PORT", wsPort + "")
                         .replace("MESSAGE_PARTS_DELIMITER", StringEscapeUtils.escapeJava(MESSAGE_PARTS_DELIMITER))
         );
+        if (port == -1) {
+            port = firstAvailablePort(START_PORT);
+        }
+        if (wsPort == -1) {
+            wsPort = firstAvailablePort(port + 1);
+        }
         server.start(port, wsPort, resourcesRoot, msg -> {
             String[] parts = msg.split(MESSAGE_PARTS_DELIMITER, 3);
             if (parts.length == 3) {
