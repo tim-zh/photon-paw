@@ -16,19 +16,38 @@
     }
 
     window.PhotonPaw = {
-        handleCommand: (eventName, callback) => {
+        /**
+         * Add a handler for commands from ui server by name
+         *
+         * @param {string} eventName - event name
+         * @param {function(string)} handler - command handler
+         * @returns {Window.PhotonPaw} PhotonPaw
+         */
+        handleCommand: (eventName, handler) => {
             mustBeStarted(false);
-            handlers[eventName] = callback;
+            handlers[eventName] = handler;
             return PhotonPaw;
         },
 
-        defaultHandler: function (callback) {
+        /**
+         * Handler for all unprocessed messages
+         *
+         * @param {function(string, string)} handler - default handler
+         * @returns {Window.PhotonPaw} PhotonPaw
+         */
+        defaultHandler: function (handler) {
             mustBeStarted(false);
-            defaultHandler = callback;
+            defaultHandler = handler;
             return PhotonPaw;
         },
 
-        start: onStarted => {
+        /**
+         * Start the ui client
+         *
+         * @param {function()} onStart - callback to execute after establishing a connection with ui
+         * @returns {Window.PhotonPaw} PhotonPaw
+         */
+        start: onStart => {
             mustBeStarted(false);
             started = true;
             ws = new WebSocket("ws://localhost:PORT/");
@@ -50,15 +69,28 @@
                     defaultHandler("", message.data);
                 }
             };
-            ws.onopen = onStarted || (() => {});
+            ws.onopen = onStart || (() => {});
             return PhotonPaw;
         },
 
+        /**
+         * Send an event to ui server
+         *
+         * @param {string} eventName - event name
+         * @param {string} message - event body
+         */
         send: (eventName, message) => {
             mustBeStarted(true);
             ws.send(eventName + "MESSAGE_PARTS_DELIMITER" + "MESSAGE_PARTS_DELIMITER" + message);
         },
 
+        /**
+         * Send an event to ui server and get a response to process
+         *
+         * @param {string} eventName - event name
+         * @param {string} message - event body
+         * @returns {Promise<string>} promise with an answer from ui server
+         */
         ask: (eventName, message) => {
             mustBeStarted(true);
             return new Promise((resolve, reject) => {
