@@ -19,7 +19,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
- * An easy and convenient way to add HTML-based UI to a console app
+ * An easy and convenient lib to add HTML-based UI to a console app
  */
 public class PhotonPaw implements AutoCloseable {
     private static final String MESSAGE_PARTS_DELIMITER = "\n";
