@@ -1,4 +1,4 @@
-package net.timzh;
+package net.timzh.photonpaw;
 
 import com.gargoylesoftware.htmlunit.BrowserVersion;
 import com.gargoylesoftware.htmlunit.WebClient;

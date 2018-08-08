@@ -1,4 +1,4 @@
-package net.timzh;
+package net.timzh.photonpaw;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;

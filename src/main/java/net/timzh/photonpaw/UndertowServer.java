@@ -1,4 +1,4 @@
-package net.timzh;
+package net.timzh.photonpaw;
 
 import io.undertow.Undertow;
 import io.undertow.server.handlers.PathHandler;

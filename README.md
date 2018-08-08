@@ -2,7 +2,7 @@
 
 #### Backend Example:
 ```java
-PhotonPaw paw = new PhotonPaw();
+PhotonPaw paw = new net.timzh.photonpaw.PhotonPaw();
 paw
     //optionally configure main port and websocket port
     .ports(19081, 19082)

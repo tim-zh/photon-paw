@@ -1,4 +1,4 @@
-package net.timzh;
+package net.timzh.photonpaw;
 
 import org.apache.commons.text.StringEscapeUtils;
 

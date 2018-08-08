@@ -1,4 +1,4 @@
-package net.timzh;
+package net.timzh.photonpaw;
 
 import java.util.function.Consumer;
 import java.util.function.Supplier;
