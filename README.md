@@ -1,5 +1,7 @@
 # [PhotonPaw](http://timzh.net/photon-paw/)
 
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/net.timzh/photon-paw/badge.svg)](https://maven-badges.herokuapp.com/maven-central/net.timzh/photon-paw)
+
 #### Backend Example:
 ```java
 PhotonPaw paw = new net.timzh.photonpaw.PhotonPaw();
@@ -56,7 +58,7 @@ PhotonPaw
         PhotonPaw.send("b", "ui command");
 
         //send a request to ui server and process the response
-        PhotonPaw.ask("c", "frontend query").then(response => alert("query response received"));
+        PhotonPaw.ask("c", "ui query").then(response => alert("query response received"));
     });
 </script>
 </body>
