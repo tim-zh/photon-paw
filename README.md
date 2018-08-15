@@ -31,9 +31,9 @@ paw
          paw.send("b", "server command")
     )
 
-    .println("press enter to stop")
+    .println("ui server started")
     .openBrowser()
-    .waitForInput()
+    .waitForTabToUnload()
     .stop();
 ```
 

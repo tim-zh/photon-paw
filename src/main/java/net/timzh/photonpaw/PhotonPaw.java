@@ -24,6 +24,7 @@ import java.util.function.Supplier;
 public class PhotonPaw implements AutoCloseable {
     private static final String MESSAGE_PARTS_DELIMITER = "\n";
     private static final int START_PORT = 19080;
+    private static final String UNLOAD_EVENT = "__unload__";
 
     private int port = -1;
     private int wsPort = -1;
@@ -34,6 +35,8 @@ public class PhotonPaw implements AutoCloseable {
     private UiServer server = createUiServer();
     private boolean rootPathBound;
     private boolean started;
+    private final Object unloadWaitLock = new Object();
+    private final Object interruptionWaitLock = new Object();
 
     /**
      * Main port
@@ -75,6 +78,15 @@ public class PhotonPaw implements AutoCloseable {
             String must = flag ? "must" : "must not";
             throw new RuntimeException("Server " + must + " be started");
         }
+    }
+
+    /**
+     * Get ui server state
+     *
+     * @return true when {@link PhotonPaw#start()} has been invoked
+     */
+    public boolean isStarted() {
+        return started;
     }
 
     /**
@@ -209,11 +221,17 @@ public class PhotonPaw implements AutoCloseable {
      */
     public PhotonPaw start(Runnable onStart) {
         mustBeStarted(false);
+        handleCommand(UNLOAD_EVENT, x -> {
+            synchronized (unloadWaitLock) {
+                unloadWaitLock.notifyAll();
+            }
+        });
         started = true;
         server.bindPath("/photonpaw_client.js", "application/javascript", () ->
                 readFile("photonpaw_client.js")
                         .replace("PORT", wsPort + "")
                         .replace("MESSAGE_PARTS_DELIMITER", StringEscapeUtils.escapeJava(MESSAGE_PARTS_DELIMITER))
+                        .replace("UNLOAD_EVENT", UNLOAD_EVENT)
         );
         if (port == -1) {
             port = firstAvailablePort(START_PORT);
@@ -248,7 +266,7 @@ public class PhotonPaw implements AutoCloseable {
     }
 
     /**
-     * Convenient way to call {@code System.out.println}
+     * Convenient way to call {@link System#out}'s {@link java.io.PrintStream#println(Object) println}
      *
      * @param o object to print
      * @return this instance
@@ -275,7 +293,7 @@ public class PhotonPaw implements AutoCloseable {
     }
 
     /**
-     * Wait for any input from {@code System.in}
+     * Wait for any input from {@link System#in}
      *
      * @return this instance
      */
@@ -286,6 +304,47 @@ public class PhotonPaw implements AutoCloseable {
             throw new RuntimeException(e);
         }
         return this;
+    }
+
+    /**
+     * Wait for {@link PhotonPaw#UNLOAD_EVENT} from ui (sent when the tab is closed or refreshed)
+     *
+     * @return this instance
+     */
+    public PhotonPaw waitForTabToUnload() {
+        synchronized (unloadWaitLock) {
+            try {
+                unloadWaitLock.wait();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        return this;
+    }
+
+    /**
+     * Wait for {@link PhotonPaw#interrupt()}
+     *
+     * @return this instance
+     */
+    public PhotonPaw waitForInterruption() {
+        synchronized (interruptionWaitLock) {
+            try {
+                interruptionWaitLock.wait();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        return this;
+    }
+
+    /**
+     * Interrupt {@link PhotonPaw#waitForInterruption()}
+     */
+    public void interrupt() {
+        synchronized (interruptionWaitLock) {
+            interruptionWaitLock.notifyAll();
+        }
     }
 
     /**

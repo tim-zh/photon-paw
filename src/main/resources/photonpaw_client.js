@@ -70,6 +70,9 @@
                 }
             };
             ws.onopen = onStart || (() => {});
+            window.addEventListener('beforeunload', e => {
+                PhotonPaw.send("UNLOAD_EVENT", "");
+            });
             return PhotonPaw;
         },
 
