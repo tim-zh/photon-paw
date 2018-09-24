@@ -13,7 +13,7 @@ paw
     .resourcesRoot(".")
 
     //add additional routes if static resources are not enough
-    .bindPath("/test", "application/javascript", () -> "alert('custom routing')")
+    .bindPath("/test", "application/javascript", request -> "alert('custom routing')")
 
     //subscribe to events from ui by name
     .handleCommand("a", msg -> System.out.println("command received"))

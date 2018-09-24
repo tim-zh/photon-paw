@@ -18,9 +18,9 @@ class PhotonPawTests {
         String testStr = "+";
         String testDoc = "<html><body>" + testStr + "</body></html>";
         try (PhotonPaw paw = createBackend()) {
-            paw.bindPath("/bind", "text/html", () -> testDoc).start();
+            paw.bindPath("/bind", "text/html", request -> testDoc).start();
             withHtmlPage("/bind", page ->
-                    assertEquals(testStr, page.asText())
+                assertEquals(testStr, page.asText())
             );
         }
     }
@@ -35,7 +35,7 @@ class PhotonPawTests {
             }).start();
 
             withHtmlPage("/handle_ui_command.html", page ->
-                    commandReceived.assertActivated()
+                commandReceived.assertActivated()
             );
         }
     }
@@ -94,7 +94,7 @@ class PhotonPawTests {
             }).start();
 
             withHtmlPage("/server_default_handler.html", page ->
-                    commandReceived.assertActivated()
+                commandReceived.assertActivated()
             );
         }
     }
@@ -127,13 +127,13 @@ class PhotonPawTests {
         String testScript = "<script>PhotonPaw.start(() => PhotonPaw.send('a', 'ui command'))</script>";
         String testDoc = "<html><body><script src='photonpaw_client.js'></script>" + testScript + "</body></html>";
         try (PhotonPaw paw = new PhotonPaw()) {
-            paw.bindPath("/bind", "text/html", () -> testDoc).handleCommand("a", msg -> {
+            paw.bindPath("/bind", "text/html", request -> testDoc).handleCommand("a", msg -> {
                 assertEquals("ui command", msg);
                 commandReceived.activate();
             }).start();
 
             withHtmlPage("/bind", paw.getPort(), page ->
-                    commandReceived.assertActivated()
+                commandReceived.assertActivated()
             );
         }
     }
@@ -154,10 +154,10 @@ class PhotonPawTests {
                 }).start();
 
                 withHtmlPage("/handle_ui_command.html", port, page ->
-                        command1Received.assertActivated()
+                    command1Received.assertActivated()
                 );
                 withHtmlPage("/handle_ui_command.html", port + 2, page ->
-                        command2Received.assertActivated()
+                    command2Received.assertActivated()
                 );
             }
         }
@@ -182,10 +182,10 @@ class PhotonPawTests {
                 assertTrue(paw1.getWsPort() < paw2.getWsPort());
 
                 withHtmlPage("/handle_ui_command.html", paw1.getPort(), page ->
-                        command1Received.assertActivated()
+                    command1Received.assertActivated()
                 );
                 withHtmlPage("/handle_ui_command.html", paw2.getPort(), page ->
-                        command2Received.assertActivated()
+                    command2Received.assertActivated()
                 );
             }
         }

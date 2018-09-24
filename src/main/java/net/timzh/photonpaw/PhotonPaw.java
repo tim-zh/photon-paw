@@ -16,7 +16,6 @@ import java.util.Scanner;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 /**
  * An easy and convenient lib to add HTML-based UI to a console app
@@ -176,7 +175,7 @@ public class PhotonPaw implements AutoCloseable {
      * @param response    response supplier
      * @return this instance
      */
-    public PhotonPaw bindPath(String path, String contentType, Supplier<String> response) {
+    public PhotonPaw bindPath(String path, String contentType, Function<UiHttpRequest, String> response) {
         mustBeStarted(false);
         if (path.equals("/")) {
             if (resourcesRoot != null) {
@@ -227,7 +226,7 @@ public class PhotonPaw implements AutoCloseable {
             }
         });
         started = true;
-        server.bindPath("/photonpaw_client.js", "application/javascript", () ->
+        server.bindPath("/photonpaw_client.js", "application/javascript", request ->
                 readFile("photonpaw_client.js")
                         .replace("PORT", wsPort + "")
                         .replace("MESSAGE_PARTS_DELIMITER", StringEscapeUtils.escapeJava(MESSAGE_PARTS_DELIMITER))

@@ -1,6 +1,7 @@
 package net.timzh.photonpaw;
 
 import io.undertow.Undertow;
+import io.undertow.server.HttpServerExchange;
 import io.undertow.server.handlers.PathHandler;
 import io.undertow.server.handlers.resource.FileResourceManager;
 import io.undertow.util.Headers;
@@ -12,8 +13,12 @@ import io.undertow.websockets.core.WebSockets;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
+import java.util.function.Function;
 
 import static io.undertow.Handlers.path;
 import static io.undertow.Handlers.resource;
@@ -69,11 +74,25 @@ class UndertowServer implements UiServer {
     }
 
     @Override
-    public void bindPath(String path, String contentType, Supplier<String> response) {
+    public void bindPath(String path, String contentType, Function<UiHttpRequest, String> response) {
         handler.addPrefixPath(path, exchange -> {
             exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, contentType);
-            exchange.getResponseSender().send(response.get());
+            exchange.getResponseSender().send(response.apply(requestFrom(exchange)));
         });
+    }
+
+    private UiHttpRequest requestFrom(HttpServerExchange exchange) {
+        Map<String, List<String>> params = new HashMap<>();
+        exchange.getQueryParameters().forEach((key, value) -> params.put(key, new ArrayList<>(value)));
+        Map<String, List<String>> headers = new HashMap<>();
+        exchange.getRequestHeaders().forEach(header -> headers.put(header.getHeaderName().toString(), header));
+        return new UiHttpRequest(
+                exchange.getRequestMethod().toString(),
+                exchange.getProtocol().toString(),
+                exchange.getHostName(),
+                exchange.getHostPort(),
+                params,
+                headers);
     }
 
     private static class MyAbstractReceiveListener extends AbstractReceiveListener {

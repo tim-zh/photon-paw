@@ -1,7 +1,7 @@
 package net.timzh.photonpaw;
 
 import java.util.function.Consumer;
-import java.util.function.Supplier;
+import java.util.function.Function;
 
 /**
  * Interface for a backend that PhotonPaw can use, it is expected to support http, websockets, serving static resources
@@ -37,5 +37,5 @@ public interface UiServer {
      * @param contentType response content type
      * @param response    response supplier
      */
-    void bindPath(String path, String contentType, Supplier<String> response);
+    void bindPath(String path, String contentType, Function<UiHttpRequest, String> response);
 }
