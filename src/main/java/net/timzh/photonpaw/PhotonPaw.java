@@ -28,10 +28,10 @@ public class PhotonPaw implements AutoCloseable {
     private int port = -1;
     private int wsPort = -1;
     private String resourcesRoot;
-    private Map<String, Consumer<String>> commandHandlers = new HashMap<>();
-    private Map<String, Function<String, String>> queryHandlers = new HashMap<>();
+    private final Map<String, Consumer<String>> commandHandlers = new HashMap<>();
+    private final Map<String, Function<String, String>> queryHandlers = new HashMap<>();
     private BiConsumer<String, String> defaultHandler = (event, msg) -> {};
-    private UiServer server = createUiServer();
+    private final UiServer server = createUiServer();
     private boolean rootPathBound;
     private boolean started;
     private final Object unloadWaitLock = new Object();
@@ -55,14 +55,14 @@ public class PhotonPaw implements AutoCloseable {
         return wsPort;
     }
 
-    private int firstAvailablePort(int startFrom) {
+    private static int firstAvailablePort(int startFrom) {
         while (! isAvailable(startFrom)) {
             ++startFrom;
         }
         return startFrom;
     }
 
-    private boolean isAvailable(int portToCheck) {
+    private static boolean isAvailable(int portToCheck) {
         try (ServerSocket ss = new ServerSocket(portToCheck); DatagramSocket ds = new DatagramSocket(portToCheck)) {
             ss.setReuseAddress(true);
             ds.setReuseAddress(true);
@@ -122,7 +122,7 @@ public class PhotonPaw implements AutoCloseable {
      */
     public PhotonPaw resourcesRoot(String path) {
         mustBeStarted(false);
-        if (rootPathBound && path.equals("/")) {
+        if (rootPathBound && "/".equals(path)) {
             throw new RuntimeException("Path \"/\" is already used by bindPath");
         }
         resourcesRoot = path;
@@ -177,11 +177,11 @@ public class PhotonPaw implements AutoCloseable {
      */
     public PhotonPaw bindPath(String path, String contentType, Function<UiHttpRequest, String> response) {
         mustBeStarted(false);
-        if (path.equals("/")) {
-            if (resourcesRoot != null) {
-                throw new RuntimeException("Path \"/\" is already used by resourcesRoot");
-            } else {
+        if ("/".equals(path)) {
+            if (resourcesRoot == null) {
                 rootPathBound = true;
+            } else {
+                throw new RuntimeException("Path \"/\" is already used by resourcesRoot");
             }
         }
         server.bindPath(path, contentType, response);
@@ -281,6 +281,7 @@ public class PhotonPaw implements AutoCloseable {
      * @return this instance
      */
     public PhotonPaw openBrowser() {
+        mustBeStarted(true);
         if (! GraphicsEnvironment.isHeadless()) {
             try {
                 Desktop.getDesktop().browse(new URI("http://localhost:" + port + "/"));
