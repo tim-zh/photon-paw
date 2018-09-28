@@ -2,6 +2,8 @@
 
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/net.timzh/photon-paw/badge.svg)](https://maven-badges.herokuapp.com/maven-central/net.timzh/photon-paw)
 
+[![CircleCI](https://circleci.com/gh/tim-zh/photon-paw.svg?style=svg)](https://circleci.com/gh/tim-zh/photon-paw)
+
 #### Backend Example:
 ```java
 PhotonPaw paw = new net.timzh.photonpaw.PhotonPaw();
