@@ -3,7 +3,7 @@
 <body>
 <script src="photonpaw_client.js"></script>
 <script>
-    PhotonPaw.start(() => {
+    PhotonPaw.start().then(() => {
         PhotonPaw.ask("a", "ui query").then(msg => {
             PhotonPaw.send("b", msg);
         });

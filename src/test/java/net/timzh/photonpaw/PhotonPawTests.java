@@ -124,7 +124,7 @@ class PhotonPawTests {
     @Test
     void test_default_config() {
         Trigger commandReceived = new Trigger();
-        String testScript = "<script>PhotonPaw.start(() => PhotonPaw.send('a', 'ui command'))</script>";
+        String testScript = "<script>PhotonPaw.start().then(() => PhotonPaw.send('a', 'ui command'))</script>";
         String testDoc = "<html><body><script src='photonpaw_client.js'></script>" + testScript + "</body></html>";
         try (PhotonPaw paw = new PhotonPaw()) {
             paw.bindPath("/bind", "text/html", request -> testDoc).handleCommand("a", msg -> {

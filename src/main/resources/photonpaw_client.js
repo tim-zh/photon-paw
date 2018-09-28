@@ -53,10 +53,9 @@
         /**
          * Start the ui client
          *
-         * @param {function()} onStart - callback to execute after establishing a connection with ui
-         * @returns {Window.PhotonPaw} PhotonPaw
+         * @returns {Promise<undefined>} - promise that resolves after establishing a connection with ui
          */
-        start: onStart => {
+        start: () => new Promise(resolve => {
             mustBeStarted(false);
             started = true;
             ws = new WebSocket("ws://localhost:PORT/");
@@ -75,7 +74,7 @@
                         PhotonPaw.log("command", eventName, data);
                         handlers[eventName](data);
                     } else {
-                        PhotonPaw.log("defaultHandler", eventName, data);
+                        PhotonPaw.log("defaultHandler", eventName, data, correlationId);
                         _defaultHandler(eventName, data);
                     }
                 } else {
@@ -83,12 +82,14 @@
                     _defaultHandler("", message.data);
                 }
             };
-            ws.onopen = onStart || (() => {});
             window.addEventListener('beforeunload', () => {
                 PhotonPaw.send("UNLOAD_EVENT", "");
             });
-            return PhotonPaw;
-        },
+            ws.onopen = () => {
+                PhotonPaw.log("ws.open");
+                resolve();
+            };
+        }),
 
         /**
          * Send an event to ui server
@@ -119,9 +120,9 @@
             let correlationId = correlationIdSeed;
             correlationIdSeed += 1;
             return withTimeout(PhotonPaw.askTimeout, resolve => {
+                askMap[correlationId] = resolve;
                 PhotonPaw.log("ask", eventName, message, correlationId);
                 ws.send(eventName + "MESSAGE_PARTS_DELIMITER" + correlationId + "MESSAGE_PARTS_DELIMITER" + message);
-                askMap[correlationId] = resolve;
             }).catch(err => {
                 PhotonPaw.log("askError", eventName, err, correlationId);
                 delete askMap[correlationId];

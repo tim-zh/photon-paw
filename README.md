@@ -52,7 +52,7 @@ PhotonPaw
     .defaultHandler((event, msg) => alert("unknown event " + event + " " + msg))
 
     //execute some code after establishing the connection with ui server
-    .start(() => {
+    .start().then(() => {
 
         //send an event to ui server
         PhotonPaw.send("b", "ui command");
