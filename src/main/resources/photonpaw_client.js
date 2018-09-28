@@ -1,10 +1,10 @@
 {
-    let handlers = []; //event name to callback
-    let defaultHandler = (eventName, message) => console.log("unprocessed message:\n" + eventName + "\n" + message);
+    let handlers = []; //event name -> callback
+    let _defaultHandler = (eventName, message) => console.log("unprocessed message:\n" + eventName + "\n" + message);
 
     let ws;
 
-    let askMap = []; //correlation id to promise resolve
+    let askMap = {}; //correlation id -> promise resolve
     let correlationIdSeed = 0;
 
     let started = false;
@@ -13,6 +13,15 @@
             let must = flag ? "must" : "must not";
             throw "PhotonPaw " + must + " be started";
         }
+    }
+
+    function withTimeout(timeout, promiseHandler) {
+        return Promise.race([
+            new Promise(promiseHandler),
+            new Promise((resolve, reject) =>
+                setTimeout(() => reject('timeout after ' + timeout + ' ms'), timeout)
+            )
+        ]);
     }
 
     window.PhotonPaw = {
@@ -37,7 +46,7 @@
          */
         defaultHandler: function (handler) {
             mustBeStarted(false);
-            defaultHandler = handler;
+            _defaultHandler = handler;
             return PhotonPaw;
         },
 
@@ -60,17 +69,18 @@
 
                     if (askMap[correlationId]) {
                         askMap[correlationId](data);
+                        delete askMap[correlationId];
                     } else if (handlers[eventName]) {
                         handlers[eventName](data);
                     } else {
-                        defaultHandler(eventName, data);
+                        _defaultHandler(eventName, data);
                     }
                 } else {
-                    defaultHandler("", message.data);
+                    _defaultHandler("", message.data);
                 }
             };
             ws.onopen = onStart || (() => {});
-            window.addEventListener('beforeunload', e => {
+            window.addEventListener('beforeunload', () => {
                 PhotonPaw.send("UNLOAD_EVENT", "");
             });
             return PhotonPaw;
@@ -88,6 +98,11 @@
         },
 
         /**
+         * Time in milliseconds to wait for {@link PhotonPaw.ask} completion
+         */
+        askTimeout: 5000,
+
+        /**
          * Send an event to ui server and get a response to process
          *
          * @param {string} eventName - event name
@@ -96,11 +111,13 @@
          */
         ask: (eventName, message) => {
             mustBeStarted(true);
-            return new Promise((resolve, reject) => {
-                let correlationId = correlationIdSeed;
-                correlationIdSeed += 1;
+            let correlationId = correlationIdSeed;
+            correlationIdSeed += 1;
+            return withTimeout(PhotonPaw.askTimeout, resolve => {
                 ws.send(eventName + "MESSAGE_PARTS_DELIMITER" + correlationId + "MESSAGE_PARTS_DELIMITER" + message);
                 askMap[correlationId] = resolve;
+            }).catch(err => {
+                delete askMap[correlationId];
             });
         }
     };
