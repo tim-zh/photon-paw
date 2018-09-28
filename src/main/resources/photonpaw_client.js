@@ -1,6 +1,6 @@
 {
     let handlers = []; //event name -> callback
-    let _defaultHandler = (eventName, message) => console.log("unprocessed message:\n" + eventName + "\n" + message);
+    let _defaultHandler = (eventName, message) => {};
 
     let ws;
 
@@ -68,14 +68,18 @@
                     let data = parts[2];
 
                     if (askMap[correlationId]) {
+                        PhotonPaw.log("queryResponse", eventName, data, correlationId);
                         askMap[correlationId](data);
                         delete askMap[correlationId];
                     } else if (handlers[eventName]) {
+                        PhotonPaw.log("command", eventName, data);
                         handlers[eventName](data);
                     } else {
+                        PhotonPaw.log("defaultHandler", eventName, data);
                         _defaultHandler(eventName, data);
                     }
                 } else {
+                    PhotonPaw.log("defaultHandler", "", message.data);
                     _defaultHandler("", message.data);
                 }
             };
@@ -94,6 +98,7 @@
          */
         send: (eventName, message) => {
             mustBeStarted(true);
+            PhotonPaw.log("send", eventName, message);
             ws.send(eventName + "MESSAGE_PARTS_DELIMITER" + "MESSAGE_PARTS_DELIMITER" + message);
         },
 
@@ -114,11 +119,35 @@
             let correlationId = correlationIdSeed;
             correlationIdSeed += 1;
             return withTimeout(PhotonPaw.askTimeout, resolve => {
+                PhotonPaw.log("ask", eventName, message, correlationId);
                 ws.send(eventName + "MESSAGE_PARTS_DELIMITER" + correlationId + "MESSAGE_PARTS_DELIMITER" + message);
                 askMap[correlationId] = resolve;
             }).catch(err => {
+                PhotonPaw.log("askError", eventName, err, correlationId);
                 delete askMap[correlationId];
             });
+        },
+
+        /**
+         * Write event log. Full format: "description, eventName=..., correlationId=..., message=..."
+         *
+         * @param {string} description - log message
+         * @param {string} [eventName] - event name
+         * @param {string} [eventMessage] - event message
+         * @param {number} [correlationId] - correlation id
+         */
+        log: (description, eventName, eventMessage, correlationId) => {
+            let s = "PhotonPaw: " + description;
+            if (eventName) {
+                s += ", eventName=" + eventName;
+            }
+            if (correlationId >= 0) {
+                s += ", correlationId=" + correlationId;
+            }
+            if (eventMessage) {
+                s += ", eventMessage=" + eventMessage;
+            }
+            console.log(s);
         }
     };
 }
