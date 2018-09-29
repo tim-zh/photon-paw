@@ -258,6 +258,12 @@ public class PhotonPaw implements AutoCloseable {
             }
         });
         started = true;
+        if (port == -1) {
+            port = firstAvailablePort(START_PORT);
+        }
+        if (wsPort == -1) {
+            wsPort = firstAvailablePort(port + 1);
+        }
         String jsClient = readFile("photonpaw_client.js")
             .replace("PORT", wsPort + "")
             .replace("MESSAGE_PARTS_DELIMITER", StringEscapeUtils.escapeJava(messagePartsDelimiter))
@@ -266,13 +272,7 @@ public class PhotonPaw implements AutoCloseable {
             log.info("sending js client");
             return jsClient;
         });
-        if (port == -1) {
-            port = firstAvailablePort(START_PORT);
-        }
-        if (wsPort == -1) {
-            wsPort = firstAvailablePort(port + 1);
-        }
-        log.info("starting, port=" + port + ", waPort=" + wsPort);
+        log.info("starting, port=" + port + ", wsPort=" + wsPort);
         server.start(port, wsPort, resourcesRoot, msg -> {
             String[] parts = msg.split(messagePartsDelimiter, 3);
             if (parts.length == 3) {
