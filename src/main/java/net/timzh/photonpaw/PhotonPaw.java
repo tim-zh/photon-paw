@@ -1,5 +1,7 @@
 package net.timzh.photonpaw;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.commons.text.StringEscapeUtils;
 
 import java.awt.Desktop;
@@ -24,6 +26,8 @@ public class PhotonPaw implements AutoCloseable {
     private static final String MESSAGE_PARTS_DELIMITER = "\n";
     private static final int START_PORT = 19080;
     private static final String UNLOAD_EVENT = "__unload__";
+
+    private final Log log = LogFactory.getLog(PhotonPaw.class);
 
     private int port = -1;
     private int wsPort = -1;
@@ -190,7 +194,9 @@ public class PhotonPaw implements AutoCloseable {
 
     private void send(String event, String correlationId, String message) {
         mustBeStarted(true);
-        server.send(event + MESSAGE_PARTS_DELIMITER + correlationId + MESSAGE_PARTS_DELIMITER + message);
+        String msg = event + MESSAGE_PARTS_DELIMITER + correlationId + MESSAGE_PARTS_DELIMITER + message;
+        log.info("sending message:\n" + msg);
+        server.send(msg);
     }
 
     /**
@@ -221,23 +227,27 @@ public class PhotonPaw implements AutoCloseable {
     public PhotonPaw start(Runnable onStart) {
         mustBeStarted(false);
         handleCommand(UNLOAD_EVENT, x -> {
+            log.info("processing unload");
             synchronized (unloadWaitLock) {
                 unloadWaitLock.notifyAll();
             }
         });
         started = true;
-        server.bindPath("/photonpaw_client.js", "application/javascript", request ->
-                readFile("photonpaw_client.js")
-                        .replace("PORT", wsPort + "")
-                        .replace("MESSAGE_PARTS_DELIMITER", StringEscapeUtils.escapeJava(MESSAGE_PARTS_DELIMITER))
-                        .replace("UNLOAD_EVENT", UNLOAD_EVENT)
-        );
+        String jsClient = readFile("photonpaw_client.js")
+            .replace("PORT", wsPort + "")
+            .replace("MESSAGE_PARTS_DELIMITER", StringEscapeUtils.escapeJava(MESSAGE_PARTS_DELIMITER))
+            .replace("UNLOAD_EVENT", UNLOAD_EVENT);
+        server.bindPath("/photonpaw_client.js", "application/javascript", request -> {
+            log.info("sending js client");
+            return jsClient;
+        });
         if (port == -1) {
             port = firstAvailablePort(START_PORT);
         }
         if (wsPort == -1) {
             wsPort = firstAvailablePort(port + 1);
         }
+        log.info("starting, port=" + port + ", waPort=" + wsPort);
         server.start(port, wsPort, resourcesRoot, msg -> {
             String[] parts = msg.split(MESSAGE_PARTS_DELIMITER, 3);
             if (parts.length == 3) {
@@ -246,9 +256,12 @@ public class PhotonPaw implements AutoCloseable {
                 String data = parts[2];
 
                 if (! correlationId.isEmpty() && queryHandlers.containsKey(eventName)) {
+                    log.info("processing query:\n" + msg);
                     String result = queryHandlers.get(eventName).apply(data);
                     send(eventName, correlationId, result);
                 } else {
+                    log.info("processing " +
+                        (commandHandlers.containsKey(eventName) ? "command:\n" : "unknown command:\n") + msg);
                     commandHandlers.getOrDefault(eventName, x -> defaultHandler.accept(eventName, x)).accept(data);
                 }
             } else {
@@ -284,6 +297,7 @@ public class PhotonPaw implements AutoCloseable {
         mustBeStarted(true);
         if (! GraphicsEnvironment.isHeadless()) {
             try {
+                log.info("opening browser");
                 Desktop.getDesktop().browse(new URI("http://localhost:" + port + "/"));
             } catch (IOException | URISyntaxException e) {
                 throw new RuntimeException(e);
@@ -299,6 +313,7 @@ public class PhotonPaw implements AutoCloseable {
      */
     public PhotonPaw waitForInput() {
         try {
+            log.info("waiting for input");
             System.in.read();
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -314,6 +329,7 @@ public class PhotonPaw implements AutoCloseable {
     public PhotonPaw waitForTabToUnload() {
         synchronized (unloadWaitLock) {
             try {
+                log.info("waiting for tab unload");
                 unloadWaitLock.wait();
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
@@ -330,6 +346,7 @@ public class PhotonPaw implements AutoCloseable {
     public PhotonPaw waitForInterruption() {
         synchronized (interruptionWaitLock) {
             try {
+                log.info("waiting for interruption");
                 interruptionWaitLock.wait();
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
@@ -343,6 +360,7 @@ public class PhotonPaw implements AutoCloseable {
      */
     public void interrupt() {
         synchronized (interruptionWaitLock) {
+            log.info("interrupting");
             interruptionWaitLock.notifyAll();
         }
     }
@@ -354,6 +372,7 @@ public class PhotonPaw implements AutoCloseable {
      */
     public PhotonPaw stop() {
         mustBeStarted(true);
+        log.info("stopping");
         server.stop();
         return this;
     }
