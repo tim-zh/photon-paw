@@ -23,23 +23,48 @@ import java.util.function.Function;
  * An easy and convenient lib to add HTML-based UI to a console app
  */
 public class PhotonPaw implements AutoCloseable {
-    private static final String MESSAGE_PARTS_DELIMITER = "\n";
     private static final int START_PORT = 19080;
-    private static final String UNLOAD_EVENT = "__unload__";
 
-    private final Log log = LogFactory.getLog(PhotonPaw.class);
+    protected String messagePartsDelimiter;
+    protected String unloadEvent;
 
-    private int port = -1;
-    private int wsPort = -1;
+    private final Log log;
+
+    private int port;
+    private int wsPort;
     private String resourcesRoot;
-    private final Map<String, Consumer<String>> commandHandlers = new HashMap<>();
-    private final Map<String, Function<String, String>> queryHandlers = new HashMap<>();
-    private BiConsumer<String, String> defaultHandler = (event, msg) -> {};
-    private final UiServer server = createUiServer();
+    private final Map<String, Consumer<String>> commandHandlers;
+    private final Map<String, Function<String, String>> queryHandlers;
+    private BiConsumer<String, String> defaultHandler;
+
+    private final UiServer server;
+
     private boolean rootPathBound;
     private boolean started;
-    private final Object unloadWaitLock = new Object();
-    private final Object interruptionWaitLock = new Object();
+    private final Object unloadWaitLock;
+    private final Object interruptionWaitLock;
+
+    public PhotonPaw() {
+        messagePartsDelimiter = "\n";
+        unloadEvent = "__unload__";
+
+        log = LogFactory.getLog(PhotonPaw.class);
+
+        port = -1;
+        wsPort = -1;
+        resourcesRoot = "";
+        commandHandlers = new HashMap<>();
+        queryHandlers = new HashMap<>();
+        defaultHandler = (event, msg) -> {};
+
+        rootPathBound = false;
+        started = false;
+        unloadWaitLock = new Object();
+        interruptionWaitLock = new Object();
+
+        log.info("creating ui server");
+        server = createUiServer();
+    }
 
     /**
      * Main port
@@ -182,7 +207,7 @@ public class PhotonPaw implements AutoCloseable {
     public PhotonPaw bindPath(String path, String contentType, Function<UiHttpRequest, String> response) {
         mustBeStarted(false);
         if ("/".equals(path)) {
-            if (resourcesRoot == null) {
+            if (resourcesRoot.isEmpty()) {
                 rootPathBound = true;
             } else {
                 throw new RuntimeException("Path \"/\" is already used by resourcesRoot");
@@ -194,7 +219,7 @@ public class PhotonPaw implements AutoCloseable {
 
     private void send(String event, String correlationId, String message) {
         mustBeStarted(true);
-        String msg = event + MESSAGE_PARTS_DELIMITER + correlationId + MESSAGE_PARTS_DELIMITER + message;
+        String msg = event + messagePartsDelimiter + correlationId + messagePartsDelimiter + message;
         log.info("sending message:\n" + msg);
         server.send(msg);
     }
@@ -226,7 +251,7 @@ public class PhotonPaw implements AutoCloseable {
      */
     public PhotonPaw start(Runnable onStart) {
         mustBeStarted(false);
-        handleCommand(UNLOAD_EVENT, x -> {
+        handleCommand(unloadEvent, x -> {
             log.info("processing unload");
             synchronized (unloadWaitLock) {
                 unloadWaitLock.notifyAll();
@@ -235,8 +260,8 @@ public class PhotonPaw implements AutoCloseable {
         started = true;
         String jsClient = readFile("photonpaw_client.js")
             .replace("PORT", wsPort + "")
-            .replace("MESSAGE_PARTS_DELIMITER", StringEscapeUtils.escapeJava(MESSAGE_PARTS_DELIMITER))
-            .replace("UNLOAD_EVENT", UNLOAD_EVENT);
+            .replace("MESSAGE_PARTS_DELIMITER", StringEscapeUtils.escapeJava(messagePartsDelimiter))
+            .replace("UNLOAD_EVENT", unloadEvent);
         server.bindPath("/photonpaw_client.js", "application/javascript", request -> {
             log.info("sending js client");
             return jsClient;
@@ -249,7 +274,7 @@ public class PhotonPaw implements AutoCloseable {
         }
         log.info("starting, port=" + port + ", waPort=" + wsPort);
         server.start(port, wsPort, resourcesRoot, msg -> {
-            String[] parts = msg.split(MESSAGE_PARTS_DELIMITER, 3);
+            String[] parts = msg.split(messagePartsDelimiter, 3);
             if (parts.length == 3) {
                 String eventName = parts[0];
                 String correlationId = parts[1];
@@ -322,7 +347,7 @@ public class PhotonPaw implements AutoCloseable {
     }
 
     /**
-     * Wait for {@link PhotonPaw#UNLOAD_EVENT} from ui (sent when the tab is closed or refreshed)
+     * Wait for {@link PhotonPaw#unloadEvent} from ui (sent when the tab is closed or refreshed)
      *
      * @return this instance
      */

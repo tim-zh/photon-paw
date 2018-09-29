@@ -1,6 +1,7 @@
 package net.timzh.photonpaw;
 
 import io.undertow.Undertow;
+import io.undertow.Undertow.Builder;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.server.handlers.PathHandler;
 import io.undertow.server.handlers.resource.FileResourceManager;
@@ -31,8 +32,8 @@ class UndertowServer implements UiServer {
 
     @Override
     public void start(int port, int wsPort, String resourceRoot, Consumer<String> wsCallback, Runnable onStart) {
-        Undertow.Builder builder = Undertow.builder();
-        if (resourceRoot != null) {
+        Builder builder = Undertow.builder();
+        if (! resourceRoot.isEmpty()) {
             FileResourceManager fileManager = new FileResourceManager(new File(resourceRoot));
             handler.addPrefixPath("/", resource(fileManager));
         }
@@ -81,7 +82,7 @@ class UndertowServer implements UiServer {
         });
     }
 
-    private UiHttpRequest requestFrom(HttpServerExchange exchange) {
+    private static UiHttpRequest requestFrom(HttpServerExchange exchange) {
         Map<String, List<String>> params = new HashMap<>();
         exchange.getQueryParameters().forEach((key, value) -> params.put(key, new ArrayList<>(value)));
         Map<String, List<String>> headers = new HashMap<>();
