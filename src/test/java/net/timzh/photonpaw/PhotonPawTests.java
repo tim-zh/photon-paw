@@ -142,8 +142,8 @@ class PhotonPawTests {
     void test_multiple_instances() {
         Trigger command1Received = new Trigger();
         Trigger command2Received = new Trigger();
-        try (PhotonPaw paw1 = new PhotonPaw().ports(port, port + 1).resourcesRoot("./src/test/resources")) {
-            try (PhotonPaw paw2 = new PhotonPaw().ports(port + 2, port + 3).resourcesRoot("./src/test/resources")) {
+        try (PhotonPaw paw1 = new PhotonPaw().ports(port, port + 1).resourcesRoot("")) {
+            try (PhotonPaw paw2 = new PhotonPaw().ports(port + 2, port + 3).resourcesRoot("")) {
                 paw1.handleCommand("a", msg -> {
                     assertEquals("ui command", msg);
                     command1Received.activate();
@@ -167,8 +167,8 @@ class PhotonPawTests {
     void test_port_auto_selection() {
         Trigger command1Received = new Trigger();
         Trigger command2Received = new Trigger();
-        try (PhotonPaw paw1 = new PhotonPaw().resourcesRoot("./src/test/resources")) {
-            try (PhotonPaw paw2 = new PhotonPaw().resourcesRoot("./src/test/resources")) {
+        try (PhotonPaw paw1 = new PhotonPaw().resourcesRoot("")) {
+            try (PhotonPaw paw2 = new PhotonPaw().resourcesRoot("")) {
                 paw1.handleCommand("a", msg -> {
                     assertEquals("ui command", msg);
                     command1Received.activate();
@@ -192,7 +192,7 @@ class PhotonPawTests {
     }
 
     private PhotonPaw createBackend() {
-        return new PhotonPaw().ports(port, port + 1).resourcesRoot("./src/test/resources");
+        return new PhotonPaw().ports(port, port + 1).resourcesRoot("");
     }
 
     private void withHtmlPage(String path, Consumer<HtmlPage> x) {

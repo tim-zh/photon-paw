@@ -52,7 +52,7 @@ public class PhotonPaw implements AutoCloseable {
 
         port = -1;
         wsPort = -1;
-        resourcesRoot = "";
+        resourcesRoot = null;
         commandHandlers = new HashMap<>();
         queryHandlers = new HashMap<>();
         defaultHandler = (event, msg) -> {};
@@ -146,14 +146,15 @@ public class PhotonPaw implements AutoCloseable {
     /**
      * Configure static resources location
      *
-     * @param path path to a directory with static resources
+     * @param path path to a directory with static resources (see {@link ClassLoader#getResource(String)})
      * @return this instance
      */
     public PhotonPaw resourcesRoot(String path) {
         mustBeStarted(false);
-        if (rootPathBound && "/".equals(path)) {
+        if (rootPathBound) {
             throw new RuntimeException("Path \"/\" is already used by bindPath");
         }
+        rootPathBound = true;
         resourcesRoot = path;
         return this;
     }
@@ -206,13 +207,10 @@ public class PhotonPaw implements AutoCloseable {
      */
     public PhotonPaw bindPath(String path, String contentType, Function<UiHttpRequest, String> response) {
         mustBeStarted(false);
-        if ("/".equals(path)) {
-            if (resourcesRoot.isEmpty()) {
-                rootPathBound = true;
-            } else {
-                throw new RuntimeException("Path \"/\" is already used by resourcesRoot");
-            }
+        if (rootPathBound && "/".equals(path)) {
+            throw new RuntimeException("Path \"/\" is already used by resourcesRoot");
         }
+        rootPathBound = true;
         server.bindPath(path, contentType, response);
         return this;
     }

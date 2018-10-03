@@ -12,7 +12,7 @@ paw
     .ports(19081, 19082)
 
     //set location of static resources if any
-    .resourcesRoot(".")
+    .resourcesRoot("")
 
     //add additional routes if static resources are not enough
     .bindPath("/test", "application/javascript", request -> "alert('custom routing')")

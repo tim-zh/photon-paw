@@ -4,7 +4,7 @@ import io.undertow.Undertow;
 import io.undertow.Undertow.Builder;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.server.handlers.PathHandler;
-import io.undertow.server.handlers.resource.FileResourceManager;
+import io.undertow.server.handlers.resource.ClassPathResourceManager;
 import io.undertow.util.Headers;
 import io.undertow.websockets.WebSocketConnectionCallback;
 import io.undertow.websockets.core.AbstractReceiveListener;
@@ -12,7 +12,6 @@ import io.undertow.websockets.core.BufferedTextMessage;
 import io.undertow.websockets.core.WebSocketChannel;
 import io.undertow.websockets.core.WebSockets;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -33,9 +32,9 @@ class UndertowServer implements UiServer {
     @Override
     public void start(int port, int wsPort, String resourceRoot, Consumer<String> wsCallback, Runnable onStart) {
         Builder builder = Undertow.builder();
-        if (! resourceRoot.isEmpty()) {
-            FileResourceManager fileManager = new FileResourceManager(new File(resourceRoot));
-            handler.addPrefixPath("/", resource(fileManager));
+        if (resourceRoot != null) {
+            ClassPathResourceManager manager = new ClassPathResourceManager(getClass().getClassLoader(), resourceRoot);
+            handler.addPrefixPath("/", resource(manager));
         }
         builder.addHttpListener(port, "localhost", handler);
         WebSocketConnectionCallback callback = (exchange, channel) -> {
