@@ -316,14 +316,15 @@ public class PhotonPaw implements AutoCloseable {
     /**
      * Open system default browser
      *
+     * @param path path to open, starting with {@code /}
      * @return this instance
      */
-    public PhotonPaw openBrowser() {
+    public PhotonPaw openBrowser(String path) {
         mustBeStarted(true);
         if (! GraphicsEnvironment.isHeadless()) {
             try {
                 log.info("opening browser");
-                Desktop.getDesktop().browse(new URI("http://localhost:" + port + "/"));
+                Desktop.getDesktop().browse(new URI("http://localhost:" + port + path));
             } catch (IOException | URISyntaxException e) {
                 throw new RuntimeException(e);
             }

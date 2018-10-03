@@ -34,7 +34,7 @@ paw
     )
 
     .println("ui server started")
-    .openBrowser()
+    .openBrowser("/index.html")
     .waitForTabToUnload()
     .stop();
 ```
