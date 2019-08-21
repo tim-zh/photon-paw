@@ -7,6 +7,7 @@ import java.util.function.Function;
  * Interface for a backend that PhotonPaw can use, it is expected to support http, websockets, serving static resources
  */
 public interface UiServer {
+
     /**
      * Start the ui server
      *
@@ -33,9 +34,8 @@ public interface UiServer {
     /**
      * Configure custom response for a path
      *
-     * @param path        url path to bind
-     * @param contentType response content type
-     * @param response    response supplier
+     * @param path            url path to bind
+     * @param responseHandler response supplier
      */
-    void bindPath(String path, String contentType, Function<UiHttpRequest, String> response);
+    void bindPath(String path, Function<UiHttpRequest, UiHttpResponse> responseHandler);
 }

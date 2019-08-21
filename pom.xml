@@ -6,7 +6,7 @@
 
   <groupId>net.timzh</groupId>
   <artifactId>photon-paw</artifactId>
-  <version>0.9.3</version>
+  <version>0.10.0</version>
   <packaging>jar</packaging>
 
   <name>Photon Paw</name>
@@ -142,7 +142,7 @@
     <dependency>
       <groupId>io.undertow</groupId>
       <artifactId>undertow-core</artifactId>
-      <version>2.0.21.Final</version>
+      <version>2.0.25.Final</version>
     </dependency>
 
     <dependency>
@@ -173,7 +173,7 @@
     <dependency>
       <groupId>net.sourceforge.htmlunit</groupId>
       <artifactId>htmlunit</artifactId>
-      <version>2.31</version>
+      <version>2.35.0</version>
     </dependency>
   </dependencies>
 

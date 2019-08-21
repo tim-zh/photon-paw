@@ -6,31 +6,30 @@
 
 #### Backend Example:
 ```java
-PhotonPaw paw = new net.timzh.photonpaw.PhotonPaw();
-paw
-    //optionally configure main port and websocket port
+new net.timzh.photonpaw.PhotonPaw()
+    //optional, configure main port and websocket port
     .ports(19081, 19082)
 
-    //set location of static resources if any
+    //set location of static resources if any, empty string to refer to jar resources
     .resourcesRoot("")
 
     //add additional routes if static resources are not enough
-    .bindPath("/test", "application/javascript", request -> "alert('custom routing')")
+    .bindPath("/test", request -> UiHttpResponse.of("application/javascript", "alert('custom routing')"))
 
     //subscribe to events from ui by name
-    .handleCommand("a", msg -> System.out.println("command received"))
+    .handleCommand("a", (msg, out) -> System.out.println("command received"))
 
     //subscribe to requests from ui that expect some response
     .handleQuery("b", msg -> "server response")
 
-    //subscribe to events with unknown or dynamic names
-    .defaultHandler((event, msg) -> System.out.println("unknown event " + event + " " + msg))
+    //subscribe to events with dynamic names
+    .defaultHandler((msg, out) -> System.out.println("unknown event " + msg))
 
     //execute some code after establishing a connection with ui
-    .start(() ->
+    .start(out ->
 
          //send an event to ui
-         paw.send("b", "server command")
+         out.send("b", "server command")
     )
 
     .println("ui server started")
@@ -50,7 +49,7 @@ PhotonPaw
     //subscribe to events from ui server by name
     .handleCommand("a", msg => alert("command received"))
 
-    //subscribe to events with unknown or dynamic names
+    //subscribe to events with dynamic names
     .defaultHandler((event, msg) => alert("unknown event " + event + " " + msg))
 
     //execute some code after establishing the connection with ui server

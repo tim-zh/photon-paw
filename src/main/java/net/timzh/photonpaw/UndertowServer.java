@@ -74,10 +74,11 @@ class UndertowServer implements UiServer {
     }
 
     @Override
-    public void bindPath(String path, String contentType, Function<UiHttpRequest, String> response) {
+    public void bindPath(String path, Function<UiHttpRequest, UiHttpResponse> responseHandler) {
         handler.addPrefixPath(path, exchange -> {
-            exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, contentType);
-            exchange.getResponseSender().send(response.apply(requestFrom(exchange)));
+            UiHttpResponse response = responseHandler.apply(requestFrom(exchange));
+            exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, response.contentType);
+            exchange.getResponseSender().send(response.body);
         });
     }
 
