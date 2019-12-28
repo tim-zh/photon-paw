@@ -15,6 +15,9 @@ import java.net.URISyntaxException;
 import java.util.Scanner;
 import java.util.function.Consumer;
 
+/**
+ * PhotonPaw in 'Started' phase
+ */
 public class PhotonPawStarted implements AutoCloseable {
 
     private static final int START_PORT = 19080;
